@@ -50,7 +50,7 @@ export function ProductDetailPage() {
             <img
               src={product.images[0]}
               alt={product.title}
-              className="w-full h-80 sm:h-96 lg:h-[500px] object-cover"
+              className="w-full aspect-square object-cover"
             />
             {product.originalPrice && (
               <Badge className="absolute top-4 left-4" variant="danger">
@@ -154,15 +154,22 @@ export function ProductDetailPage() {
       {relatedProducts.length > 0 && (
         <section className="mt-16" aria-labelledby="related-heading">
           <h2 id="related-heading" className="text-xl font-bold text-color-1 mb-6">You might also like</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {relatedProducts.map(p => (
-              <Card key={p.id} hover className="overflow-hidden group">
-                <img src={p.images[0]} alt={p.title} className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300" />
-                <div className="p-4">
+              <Card key={p.id} hover className="overflow-hidden group flex flex-col">
+                <Link to={`/products/${p.slug}`} className="block">
+                  <img src={p.images[0]} alt={p.title} className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300" />
+                </Link>
+                <div className="p-4 flex flex-col flex-1">
                   <Link to={`/products/${p.slug}`}>
-                    <h3 className="text-sm font-semibold text-color-1 hover:text-color-4 transition-colors duration-150">{p.title}</h3>
+                    <h3 className="text-sm font-semibold text-color-1 hover:text-color-4 transition-colors duration-150 line-clamp-2">{p.title}</h3>
                   </Link>
                   <p className="text-lg font-bold text-color-1 mt-2">৳{p.price}</p>
+                  <div className="mt-3 flex justify-center">
+                    <Button size="sm" onClick={() => addToCart(p)} className="w-full" aria-label={`Add ${p.title} to cart`}>
+                      Add to cart
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}

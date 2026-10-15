@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Search, Menu, X, User, Heart } from 'lucide-react';
+import { ShoppingCart, Menu, X, User, Heart } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { categories } from '../../data/mockData';
+import { LiveSearch } from '../search/LiveSearch';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const { totalItems } = useCart();
   const location = useLocation();
 
@@ -26,32 +26,18 @@ export function Header() {
 
       {/* Main header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        {/* Top row: Logo + Actions */}
+        <div className="flex items-center justify-between h-14 md:h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group" aria-label="Meili Beauty Shop home">
+          <Link to="/" className="flex items-center gap-2 group shrink-0" aria-label="Meili Beauty Shop home">
             <span className="text-2xl">✨</span>
-            <span className="text-xl font-bold text-color-1 group-hover:text-color-4 transition-colors duration-150">
+            <span className="text-lg sm:text-xl font-bold text-color-1 group-hover:text-color-4 transition-colors duration-150">
               Meili Beauty
             </span>
           </Link>
 
-          {/* Search bar - desktop */}
-          <div className="hidden md:flex flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-color-2" aria-hidden="true" />
-              <input
-                type="search"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 text-sm bg-color-7 border border-color-6 rounded-md focus:border-color-3 focus:ring-2 focus:ring-color-3/20 transition-all duration-150 text-color-1 placeholder:text-color-2/50"
-                aria-label="Search products"
-              />
-            </div>
-          </div>
-
           {/* Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <Link to="/admin" className="hidden sm:flex items-center gap-1 text-sm text-color-2 hover:text-color-4 transition-colors duration-150" aria-label="Admin dashboard">
               <User className="w-4 h-4" />
               <span className="hidden lg:inline">Admin</span>
@@ -78,35 +64,32 @@ export function Header() {
           </div>
         </div>
 
-        {/* Navigation - desktop */}
-        <nav className="hidden md:flex items-center gap-6 pb-3" aria-label="Main navigation">
-          {navLinks.map(link => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`text-sm font-medium transition-colors duration-150 ${
-                location.pathname === link.path ? 'text-color-4' : 'text-color-2 hover:text-color-1'
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        {/* Second row: Search bar - visible on all screens */}
+        <div className="pb-3 md:pb-0 md:flex md:items-center md:gap-6 md:pb-3">
+          <div className="w-full md:flex-1 md:max-w-md">
+            <LiveSearch />
+          </div>
+          {/* Navigation - desktop, inline with search */}
+          <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
+            {navLinks.map(link => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`text-sm font-medium transition-colors duration-150 whitespace-nowrap ${
+                  location.pathname === link.path ? 'text-color-4' : 'text-color-2 hover:text-color-1'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
       </div>
 
       {/* Mobile menu */}
       {isMenuOpen && (
         <div className="md:hidden border-t border-color-6 bg-color-8">
           <div className="px-4 py-4 space-y-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-color-2" aria-hidden="true" />
-              <input
-                type="search"
-                placeholder="Search products..."
-                className="w-full pl-10 pr-4 py-2 text-sm bg-color-7 border border-color-6 rounded-md text-color-1"
-                aria-label="Search products"
-              />
-            </div>
             {navLinks.map(link => (
               <Link
                 key={link.path}

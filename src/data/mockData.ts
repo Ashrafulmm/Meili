@@ -134,6 +134,38 @@ export const products: Product[] = [
     category: 'Skincare', stock: 67, rating: 4.7, reviewCount: 145, isFeatured: true,
     seoTitle: 'Niacinamide pore minimizer | Meili Beauty Shop', seoDescription: 'Minimize pores with our niacinamide serum.', createdAt: '2024-01-30'
   },
+  {
+    id: '9', title: 'COSRX snail mucin essence', slug: 'cosrx-snail-mucin-essence', price: 1599, originalPrice: 1899,
+    description: '96% snail secretion filtrate essence that hydrates, repairs, and revitalizes dull skin. A K-beauty cult favorite.',
+    shortDescription: '96% snail mucin hydrating essence',
+    images: ['https://images.unsplash.com/photo-1570194065650-d99fb4bedf0a?w=600&h=600&fit=crop'],
+    category: 'K-Beauty', stock: 42, rating: 4.9, reviewCount: 312, isFeatured: true,
+    seoTitle: 'COSRX snail mucin essence | Meili Beauty Shop', seoDescription: 'K-beauty favorite snail mucin essence for glowing skin.', createdAt: '2024-02-20'
+  },
+  {
+    id: '10', title: 'Laneige lip sleeping mask', slug: 'laneige-lip-sleeping-mask', price: 1299, originalPrice: 1599,
+    description: 'Overnight lip mask with vitamin C and antioxidants. Wake up with soft, supple lips. Bestselling K-beauty lip care.',
+    shortDescription: 'Overnight lip mask with vitamin C',
+    images: ['https://images.unsplash.com/photo-1599305090598-fe179d501227?w=600&h=600&fit=crop'],
+    category: 'K-Beauty', stock: 58, rating: 4.8, reviewCount: 245, isFeatured: true,
+    seoTitle: 'Laneige lip sleeping mask | Meili Beauty Shop', seoDescription: 'Wake up with soft lips using Laneige lip sleeping mask.', createdAt: '2024-02-18'
+  },
+  {
+    id: '11', title: 'Beauty of Joseon sunscreen', slug: 'beauty-of-joseon-sunscreen', price: 999, originalPrice: 1299,
+    description: 'Lightweight Korean sunscreen with rice extract and probiotics. SPF50+ PA++++ protection without white cast.',
+    shortDescription: 'Rice extract SPF50+ Korean sunscreen',
+    images: ['https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=600&h=600&fit=crop'],
+    category: 'K-Beauty', stock: 73, rating: 4.9, reviewCount: 189, isFeatured: true,
+    seoTitle: 'Beauty of Joseon sunscreen | Meili Beauty Shop', seoDescription: 'Lightweight Korean sunscreen with no white cast.', createdAt: '2024-02-22'
+  },
+  {
+    id: '12', title: 'Innisfree green tea serum', slug: 'innisfree-green-tea-serum', price: 1199,
+    description: 'Hydrating serum with Jeju green tea extract. Rich in antioxidants to soothe and protect skin from environmental damage.',
+    shortDescription: 'Jeju green tea hydrating serum',
+    images: ['https://images.unsplash.com/photo-1608248597279-f99d1ecb0cd2?w=600&h=600&fit=crop'],
+    category: 'K-Beauty', stock: 36, rating: 4.6, reviewCount: 98, isFeatured: false,
+    seoTitle: 'Innisfree green tea serum | Meili Beauty Shop', seoDescription: 'Hydrate with Jeju green tea serum.', createdAt: '2024-02-25'
+  },
 ];
 
 export const banners: Banner[] = [

@@ -5,10 +5,12 @@ import { products, categories, banners } from '../data/mockData';
 import { Card, Button, Badge } from '../components/ui';
 import { useCart } from '../context/CartContext';
 
+type TabKey = 'deals' | 'kbeauty' | 'yourpick' | 'foryou';
+
 export function HomePage() {
   const [currentBanner, setCurrentBanner] = useState(0);
+  const [activeTab, setActiveTab] = useState<TabKey>('deals');
   const { addToCart } = useCart();
-  const featuredProducts = products.filter(p => p.isFeatured);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -16,6 +18,32 @@ export function HomePage() {
     }, 5000);
     return () => clearInterval(timer);
   }, []);
+
+  // Tab data
+  const tabs: { key: TabKey; label: string; products: typeof products }[] = [
+    {
+      key: 'deals',
+      label: 'Best deals',
+      products: products.filter(p => p.originalPrice && p.originalPrice > p.price),
+    },
+    {
+      key: 'kbeauty',
+      label: 'K-Beauty',
+      products: products.filter(p => p.category === 'K-Beauty'),
+    },
+    {
+      key: 'yourpick',
+      label: 'Your pick',
+      products: products.filter(p => p.isFeatured).slice(0, 8),
+    },
+    {
+      key: 'foryou',
+      label: 'For you',
+      products: [...products].sort(() => 0.5 - Math.random()).slice(0, 8),
+    },
+  ];
+
+  const currentProducts = tabs.find(t => t.key === activeTab)?.products || [];
 
   return (
     <div className="min-h-screen">
@@ -61,7 +89,7 @@ export function HomePage() {
                 <img
                   src={banners[currentBanner]?.image}
                   alt={banners[currentBanner]?.title}
-                  className="relative rounded-sm shadow-sm object-cover w-full h-80 lg:h-96"
+                  className="relative rounded-sm shadow-sm object-cover w-full aspect-square"
                 />
               </div>
             </div>
@@ -129,57 +157,49 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Featured products */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="featured-heading">
-        <div className="flex items-center justify-between mb-8">
-          <h2 id="featured-heading" className="text-2xl font-bold text-color-1">Featured products</h2>
-          <Link to="/products" className="text-sm font-medium text-color-4 hover:text-color-5 transition-colors duration-150 flex items-center gap-1">
-            View all <ArrowRight className="w-3 h-3" />
-          </Link>
+      {/* Tabbed Products Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="products-heading">
+        <div className="mb-8">
+          <h2 id="products-heading" className="text-2xl font-bold text-color-1 mb-6">Explore our collection</h2>
+          
+          {/* Tabs */}
+          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0" role="tablist" aria-label="Product categories">
+            {tabs.map(tab => (
+              <button
+                key={tab.key}
+                role="tab"
+                aria-selected={activeTab === tab.key}
+                aria-controls={`panel-${tab.key}`}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-5 py-2.5 text-sm font-medium rounded-md whitespace-nowrap transition-all duration-150 ${
+                  activeTab === tab.key
+                    ? 'bg-color-4 text-color-8 shadow-md'
+                    : 'bg-color-8 text-color-2 hover:bg-color-6 hover:text-color-1 border border-color-6'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProducts.map(product => (
-            <Card key={product.id} hover className="overflow-hidden group">
-              <div className="relative overflow-hidden">
-                <img
-                  src={product.images[0]}
-                  alt={product.title}
-                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                {product.originalPrice && (
-                  <Badge className="absolute top-3 left-3" variant="danger">
-                    -{Math.round((1 - product.price / product.originalPrice) * 100)}%
-                  </Badge>
-                )}
-              </div>
-              <div className="p-4 space-y-3">
-                <div>
-                  <p className="text-xs text-color-2 mb-1">{product.category}</p>
-                  <Link to={`/products/${product.slug}`}>
-                    <h3 className="text-sm font-semibold text-color-1 hover:text-color-4 transition-colors duration-150">
-                      {product.title}
-                    </h3>
-                  </Link>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" aria-hidden="true" />
-                  <span className="text-xs text-color-2">{product.rating} ({product.reviewCount})</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-color-1">৳{product.price}</span>
-                    {product.originalPrice && (
-                      <span className="text-xs text-color-2 line-through">৳{product.originalPrice}</span>
-                    )}
-                  </div>
-                  <Button size="sm" onClick={() => addToCart(product)} aria-label={`Add ${product.title} to cart`}>
-                    Add to cart
-                  </Button>
-                </div>
-              </div>
-            </Card>
+
+        {/* Tab panels */}
+        <div
+          id={`panel-${activeTab}`}
+          role="tabpanel"
+          aria-labelledby={activeTab}
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
+        >
+          {currentProducts.map(product => (
+            <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
           ))}
         </div>
+
+        {currentProducts.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-color-2">No products in this category yet</p>
+          </div>
+        )}
       </section>
 
       {/* CTA Banner */}
@@ -201,5 +221,57 @@ export function HomePage() {
         </div>
       </section>
     </div>
+  );
+}
+
+// Product Card Component with 1:1 image and centered add-to-cart
+interface ProductCardProps {
+  product: typeof products[0];
+  onAddToCart: () => void;
+}
+
+function ProductCard({ product, onAddToCart }: ProductCardProps) {
+  return (
+    <Card hover className="overflow-hidden group flex flex-col">
+      <Link to={`/products/${product.slug}`} className="block">
+        <div className="relative overflow-hidden">
+          <img
+            src={product.images[0]}
+            alt={product.title}
+            className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+          {product.originalPrice && (
+            <Badge className="absolute top-3 left-3" variant="danger">
+              -{Math.round((1 - product.price / product.originalPrice) * 100)}%
+            </Badge>
+          )}
+        </div>
+      </Link>
+      <div className="p-4 flex flex-col flex-1">
+        <div className="flex-1">
+          <p className="text-xs text-color-2 mb-1">{product.category}</p>
+          <Link to={`/products/${product.slug}`}>
+            <h3 className="text-sm font-semibold text-color-1 hover:text-color-4 transition-colors duration-150 line-clamp-2">
+              {product.title}
+            </h3>
+          </Link>
+          <div className="flex items-center gap-1 mt-2">
+            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" aria-hidden="true" />
+            <span className="text-xs text-color-2">{product.rating}</span>
+          </div>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-base font-bold text-color-1">৳{product.price}</span>
+            {product.originalPrice && (
+              <span className="text-xs text-color-2 line-through">৳{product.originalPrice}</span>
+            )}
+          </div>
+        </div>
+        <div className="mt-3 flex justify-center">
+          <Button size="sm" onClick={onAddToCart} className="w-full" aria-label={`Add ${product.title} to cart`}>
+            Add to cart
+          </Button>
+        </div>
+      </div>
+    </Card>
   );
 }

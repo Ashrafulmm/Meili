@@ -137,38 +137,42 @@ export function ProductsPage() {
 
           {/* Products */}
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {filteredProducts.map(product => (
-                <Card key={product.id} hover className="overflow-hidden group">
-                  <div className="relative overflow-hidden">
-                    <img src={product.images[0]} alt={product.title} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" />
-                    {product.originalPrice && (
-                      <Badge className="absolute top-3 left-3" variant="danger">
-                        -{Math.round((1 - product.price / product.originalPrice) * 100)}%
-                      </Badge>
-                    )}
-                    {product.stock < 10 && (
-                      <Badge className="absolute top-3 right-3" variant="warning">Low stock</Badge>
-                    )}
-                  </div>
-                  <div className="p-4 space-y-3">
-                    <div>
+                <Card key={product.id} hover className="overflow-hidden group flex flex-col">
+                  <Link to={`/products/${product.slug}`} className="block">
+                    <div className="relative overflow-hidden">
+                      <img src={product.images[0]} alt={product.title} className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300" />
+                      {product.originalPrice && (
+                        <Badge className="absolute top-3 left-3" variant="danger">
+                          -{Math.round((1 - product.price / product.originalPrice) * 100)}%
+                        </Badge>
+                      )}
+                      {product.stock < 10 && (
+                        <Badge className="absolute top-3 right-3" variant="warning">Low stock</Badge>
+                      )}
+                    </div>
+                  </Link>
+                  <div className="p-4 flex flex-col flex-1">
+                    <div className="flex-1">
                       <p className="text-xs text-color-2 mb-1">{product.category}</p>
                       <Link to={`/products/${product.slug}`}>
-                        <h3 className="text-sm font-semibold text-color-1 hover:text-color-4 transition-colors duration-150">{product.title}</h3>
+                        <h3 className="text-sm font-semibold text-color-1 hover:text-color-4 transition-colors duration-150 line-clamp-2">{product.title}</h3>
                       </Link>
                       <p className="text-xs text-color-2 mt-1 line-clamp-2">{product.shortDescription}</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                      <span className="text-xs text-color-2">{product.rating} ({product.reviewCount} reviews)</span>
-                    </div>
-                    <div className="flex items-center justify-between pt-2">
-                      <div>
-                        <span className="text-lg font-bold text-color-1">৳{product.price}</span>
-                        {product.originalPrice && <span className="text-xs text-color-2 line-through ml-2">৳{product.originalPrice}</span>}
+                      <div className="flex items-center gap-1 mt-2">
+                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                        <span className="text-xs text-color-2">{product.rating} ({product.reviewCount})</span>
                       </div>
-                      <Button size="sm" onClick={() => addToCart(product)}>Add to cart</Button>
+                      <div className="flex items-baseline gap-2 mt-2">
+                        <span className="text-base font-bold text-color-1">৳{product.price}</span>
+                        {product.originalPrice && <span className="text-xs text-color-2 line-through">৳{product.originalPrice}</span>}
+                      </div>
+                    </div>
+                    <div className="mt-3 flex justify-center">
+                      <Button size="sm" onClick={() => addToCart(product)} className="w-full" aria-label={`Add ${product.title} to cart`}>
+                        Add to cart
+                      </Button>
                     </div>
                   </div>
                 </Card>
