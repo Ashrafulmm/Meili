@@ -1,1 +1,89 @@
 @import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-color-1: #63011C;
+  --color-color-2: #7A5C66;
+  --color-color-3: #1F7A4D;
+  --color-color-4: #D6004A;
+  --color-color-5: #F50254;
+  --color-color-6: #F3D6DF;
+  --color-color-7: #E6F4EC;
+  --color-color-8: #FFFFFF;
+
+  /* Typography */
+  --font-family-sans: "Anek Bangla", sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 24px;
+  --font-size-4xl: 32px;
+
+  /* Spacing (base 4px) */
+  --spacing-1: 2px;
+  --spacing-2: 4px;
+  --spacing-3: 6px;
+  --spacing-4: 8px;
+  --spacing-5: 12px;
+  --spacing-6: 14px;
+  --spacing-7: 16px;
+  --spacing-8: 20px;
+  --spacing-9: 24px;
+  --spacing-10: 32px;
+  --spacing-11: 40px;
+  --spacing-12: 56px;
+  --spacing-13: 84px;
+  --spacing-14: 165px;
+
+  /* Shapes */
+  --radius-sm: 14px;
+  --radius-md: 999px;
+
+  /* Elevation */
+  --shadow-sm: 0px 12px 32px -8px rgba(99, 1, 28, 0.28);
+  --shadow-md: 0px 1px 2px rgba(43, 26, 32, 0.06), 0px 8px 24px -12px rgba(99, 1, 28, 0.18);
+
+  /* Motion */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Anek Bangla", sans-serif;
+  font-size: 14px;
+  color: #63011C;
+  background-color: #E6F4EC;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid #1F7A4D;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #E6F4EC;
+}
+::-webkit-scrollbar-thumb {
+  background: #F3D6DF;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #7A5C66;
+}
