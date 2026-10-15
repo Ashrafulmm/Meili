@@ -143,9 +143,10 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4 text-sm">Contact us</h3>
             <ul className="space-y-2 text-sm text-color-6/80">
-              <li>📞 +880 1712 345 678</li>
-              <li>✉️ hello@meilibeauty.com</li>
-              <li>📍 Shop 12, Bashundhara City, Dhaka</li>
+              <li>📞 +880 1965 480 023</li>
+              <li>✉️ meilibeautybd@gmail.com</li>
+              <li>📍 Mohammadpur, Dhaka</li>
+              <li className="pt-2 text-xs text-color-6/60">Operated from Nanjing, China 🇨🇳</li>
             </ul>
           </div>
         </div>

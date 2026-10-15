@@ -186,9 +186,9 @@ export const storeSettings: StoreSettings = {
   logo: '✨',
   seoTitle: 'Meili Beauty Shop - Premium beauty & skincare products',
   seoDescription: 'Shop the best beauty and skincare products at Meili Beauty Shop. Free delivery on orders above ৳2000.',
-  phone: '+8801712345678',
-  email: 'hello@meilibeauty.com',
-  address: 'Shop 12, Bashundhara City, Dhaka',
+  phone: '+8801965480023',
+  email: 'meilibeautybd@gmail.com',
+  address: 'Mohammadpur, Dhaka, Bangladesh',
   facebook: 'https://facebook.com/meilibeauty',
   instagram: 'https://instagram.com/meilibeauty',
 };

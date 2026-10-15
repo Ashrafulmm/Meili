@@ -170,7 +170,7 @@ export function ProductsPage() {
                       </div>
                     </div>
                     <div className="mt-3 flex justify-center">
-                      <Button size="sm" onClick={() => addToCart(product)} className="w-full" aria-label={`Add ${product.title} to cart`}>
+                      <Button size="sm" onClick={() => addToCart(product)} aria-label={`Add ${product.title} to cart`}>
                         Add to cart
                       </Button>
                     </div>

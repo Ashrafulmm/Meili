@@ -5,11 +5,8 @@ import { products, categories, banners } from '../data/mockData';
 import { Card, Button, Badge } from '../components/ui';
 import { useCart } from '../context/CartContext';
 
-type TabKey = 'deals' | 'kbeauty' | 'yourpick' | 'foryou';
-
 export function HomePage() {
   const [currentBanner, setCurrentBanner] = useState(0);
-  const [activeTab, setActiveTab] = useState<TabKey>('deals');
   const { addToCart } = useCart();
 
   useEffect(() => {
@@ -19,31 +16,11 @@ export function HomePage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Tab data
-  const tabs: { key: TabKey; label: string; products: typeof products }[] = [
-    {
-      key: 'deals',
-      label: 'Best deals',
-      products: products.filter(p => p.originalPrice && p.originalPrice > p.price),
-    },
-    {
-      key: 'kbeauty',
-      label: 'K-Beauty',
-      products: products.filter(p => p.category === 'K-Beauty'),
-    },
-    {
-      key: 'yourpick',
-      label: 'Your pick',
-      products: products.filter(p => p.isFeatured).slice(0, 8),
-    },
-    {
-      key: 'foryou',
-      label: 'For you',
-      products: [...products].sort(() => 0.5 - Math.random()).slice(0, 8),
-    },
-  ];
-
-  const currentProducts = tabs.find(t => t.key === activeTab)?.products || [];
+  // Section data
+  const bestDeals = products.filter(p => p.originalPrice && p.originalPrice > p.price);
+  const kBeauty = products.filter(p => p.category === 'K-Beauty');
+  const yourPick = products.filter(p => p.isFeatured).slice(0, 8);
+  const forYou = [...products].sort((a, b) => b.rating - a.rating).slice(0, 8);
 
   return (
     <div className="min-h-screen">
@@ -157,49 +134,76 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Tabbed Products Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="products-heading">
-        <div className="mb-8">
-          <h2 id="products-heading" className="text-2xl font-bold text-color-1 mb-6">Explore our collection</h2>
-          
-          {/* Tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0" role="tablist" aria-label="Product categories">
-            {tabs.map(tab => (
-              <button
-                key={tab.key}
-                role="tab"
-                aria-selected={activeTab === tab.key}
-                aria-controls={`panel-${tab.key}`}
-                onClick={() => setActiveTab(tab.key)}
-                className={`px-5 py-2.5 text-sm font-medium rounded-md whitespace-nowrap transition-all duration-150 ${
-                  activeTab === tab.key
-                    ? 'bg-color-4 text-color-8 shadow-md'
-                    : 'bg-color-8 text-color-2 hover:bg-color-6 hover:text-color-1 border border-color-6'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+      {/* Best Deals Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="best-deals-heading">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 id="best-deals-heading" className="text-2xl font-bold text-color-1">Best deals</h2>
+            <p className="text-sm text-color-2 mt-1">Grab them before they're gone</p>
           </div>
+          <Link to="/products" className="text-sm font-medium text-color-4 hover:text-color-5 transition-colors duration-150 flex items-center gap-1">
+            View all <ArrowRight className="w-3 h-3" />
+          </Link>
         </div>
-
-        {/* Tab panels */}
-        <div
-          id={`panel-${activeTab}`}
-          role="tabpanel"
-          aria-labelledby={activeTab}
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
-        >
-          {currentProducts.map(product => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {bestDeals.map(product => (
             <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
           ))}
         </div>
+      </section>
 
-        {currentProducts.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-color-2">No products in this category yet</p>
+      {/* K-Beauty Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="kbeauty-heading">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 id="kbeauty-heading" className="text-2xl font-bold text-color-1">K-Beauty</h2>
+            <p className="text-sm text-color-2 mt-1">Korean skincare favorites</p>
           </div>
-        )}
+          <Link to="/products?category=k-beauty" className="text-sm font-medium text-color-4 hover:text-color-5 transition-colors duration-150 flex items-center gap-1">
+            View all <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {kBeauty.map(product => (
+            <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
+          ))}
+        </div>
+      </section>
+
+      {/* Your Pick Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="your-pick-heading">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 id="your-pick-heading" className="text-2xl font-bold text-color-1">Your pick</h2>
+            <p className="text-sm text-color-2 mt-1">Handpicked by our team</p>
+          </div>
+          <Link to="/products" className="text-sm font-medium text-color-4 hover:text-color-5 transition-colors duration-150 flex items-center gap-1">
+            View all <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {yourPick.map(product => (
+            <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
+          ))}
+        </div>
+      </section>
+
+      {/* For You Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="for-you-heading">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 id="for-you-heading" className="text-2xl font-bold text-color-1">For you</h2>
+            <p className="text-sm text-color-2 mt-1">Recommended based on top-rated products</p>
+          </div>
+          <Link to="/products" className="text-sm font-medium text-color-4 hover:text-color-5 transition-colors duration-150 flex items-center gap-1">
+            View all <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {forYou.map(product => (
+            <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
+          ))}
+        </div>
       </section>
 
       {/* CTA Banner */}
@@ -224,7 +228,7 @@ export function HomePage() {
   );
 }
 
-// Product Card Component with 1:1 image and centered add-to-cart
+// Product Card Component with 1:1 image and centered standard-size add-to-cart
 interface ProductCardProps {
   product: typeof products[0];
   onAddToCart: () => void;
@@ -267,7 +271,7 @@ function ProductCard({ product, onAddToCart }: ProductCardProps) {
           </div>
         </div>
         <div className="mt-3 flex justify-center">
-          <Button size="sm" onClick={onAddToCart} className="w-full" aria-label={`Add ${product.title} to cart`}>
+          <Button size="sm" onClick={onAddToCart} aria-label={`Add ${product.title} to cart`}>
             Add to cart
           </Button>
         </div>

@@ -166,7 +166,7 @@ export function ProductDetailPage() {
                   </Link>
                   <p className="text-lg font-bold text-color-1 mt-2">৳{p.price}</p>
                   <div className="mt-3 flex justify-center">
-                    <Button size="sm" onClick={() => addToCart(p)} className="w-full" aria-label={`Add ${p.title} to cart`}>
+                    <Button size="sm" onClick={() => addToCart(p)} aria-label={`Add ${p.title} to cart`}>
                       Add to cart
                     </Button>
                   </div>

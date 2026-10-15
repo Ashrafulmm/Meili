@@ -69,7 +69,7 @@ function AboutPage() {
           Welcome to Meili Beauty Shop — your trusted destination for premium beauty and skincare products. We curate the finest products from around the world to bring you authentic, high-quality beauty essentials.
         </p>
         <p>
-          Founded with a passion for beauty and self-care, we believe everyone deserves access to products that make them feel confident and radiant. Our collection spans skincare, makeup, haircare, fragrances, and more.
+          Founded with a passion for beauty and self-care, we believe everyone deserves access to products that make them feel confident and radiant. Our collection spans skincare, makeup, haircare, fragrances, K-Beauty, and more.
         </p>
         <div className="grid sm:grid-cols-3 gap-6 mt-8">
           <div className="text-center p-6 bg-color-8 rounded-sm shadow-md">
@@ -86,6 +86,28 @@ function AboutPage() {
             <span className="text-3xl mb-3 block">🚚</span>
             <h3 className="font-semibold text-color-1 mb-1">Fast delivery</h3>
             <p className="text-xs text-color-2">Quick and reliable delivery across Bangladesh</p>
+          </div>
+        </div>
+
+        <div className="mt-12 bg-color-8 rounded-sm shadow-md p-6">
+          <h2 className="text-xl font-bold text-color-1 mb-4">Get in touch</h2>
+          <div className="grid sm:grid-cols-2 gap-4 text-sm text-color-2">
+            <div>
+              <p className="font-medium text-color-1 mb-1">Phone</p>
+              <p>+880 1965 480 023</p>
+            </div>
+            <div>
+              <p className="font-medium text-color-1 mb-1">Email</p>
+              <p>meilibeautybd@gmail.com</p>
+            </div>
+            <div>
+              <p className="font-medium text-color-1 mb-1">Shop location</p>
+              <p>Mohammadpur, Dhaka, Bangladesh</p>
+            </div>
+            <div>
+              <p className="font-medium text-color-1 mb-1">Operated from</p>
+              <p>Nanjing, China 🇨🇳</p>
+            </div>
           </div>
         </div>
       </div>
