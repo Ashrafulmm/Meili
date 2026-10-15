@@ -166,9 +166,14 @@ export function ProductDetailPage() {
                   </Link>
                   <p className="text-lg font-bold text-color-1 mt-2">৳{p.price}</p>
                   <div className="mt-3 flex justify-center">
-                    <Button size="sm" onClick={() => addToCart(p)} aria-label={`Add ${p.title} to cart`}>
+                    <button
+                      onClick={() => addToCart(p)}
+                      style={{ borderRadius: '5px', padding: '8px 16px', fontSize: '13px' }}
+                      className="inline-flex items-center justify-center font-semibold bg-color-4 text-color-8 hover:bg-color-5 active:bg-color-1 shadow-md hover:shadow-sm transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-color-3"
+                      aria-label={`Add ${p.title} to cart`}
+                    >
                       Add to cart
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </Card>

@@ -16,11 +16,11 @@ export function HomePage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Section data
-  const bestDeals = products.filter(p => p.originalPrice && p.originalPrice > p.price);
-  const kBeauty = products.filter(p => p.category === 'K-Beauty');
-  const yourPick = products.filter(p => p.isFeatured).slice(0, 8);
-  const forYou = [...products].sort((a, b) => b.rating - a.rating).slice(0, 8);
+  // Section data - driven by product.sections field (managed from admin)
+  const bestDeals = products.filter(p => p.sections.includes('best-deals'));
+  const kBeauty = products.filter(p => p.sections.includes('k-beauty'));
+  const yourPick = products.filter(p => p.sections.includes('your-pick'));
+  const forYou = products.filter(p => p.sections.includes('for-you'));
 
   return (
     <div className="min-h-screen">
@@ -271,9 +271,14 @@ function ProductCard({ product, onAddToCart }: ProductCardProps) {
           </div>
         </div>
         <div className="mt-3 flex justify-center">
-          <Button size="sm" onClick={onAddToCart} aria-label={`Add ${product.title} to cart`}>
+          <button
+            onClick={onAddToCart}
+            style={{ borderRadius: '5px', padding: '8px 16px', fontSize: '13px' }}
+            className="inline-flex items-center justify-center font-semibold bg-color-4 text-color-8 hover:bg-color-5 active:bg-color-1 shadow-md hover:shadow-sm transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-color-3 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label={`Add ${product.title} to cart`}
+          >
             Add to cart
-          </Button>
+          </button>
         </div>
       </div>
     </Card>
