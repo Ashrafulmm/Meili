@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { upload } from '@vercel/blob/client';
 
 interface ImageUploadProps {
   images: string[];
@@ -47,13 +46,22 @@ export function ImageUpload({ images, onChange, maxImages = 10 }: ImageUploadPro
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        // Upload to Vercel Blob via serverless function
-        const blob = await upload(file.name, file, {
-          access: 'public',
-          handleUploadUrl: '/api/upload',
-        });
+        // Create FormData and upload to Vercel Blob via serverless function
+        const formData = new FormData();
+        formData.append('file', file);
         
-        newUrls.push(blob.url);
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Upload failed');
+        }
+
+        const data = await response.json();
+        newUrls.push(data.url);
         setUploadProgress(Math.round(((i + 1) / files.length) * 100));
       }
 
@@ -62,7 +70,7 @@ export function ImageUpload({ images, onChange, maxImages = 10 }: ImageUploadPro
       onChange([...currentImages, ...newUrls]);
     } catch (error) {
       console.error('Upload failed:', error);
-      alert('Failed to upload image. Please try again.');
+      alert(`Failed to upload image: ${(error as Error).message}`);
     } finally {
       setUploading(false);
       setUploadProgress(0);
