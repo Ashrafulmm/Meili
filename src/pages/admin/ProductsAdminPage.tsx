@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Edit2, Trash2, Eye, Tag, AlertCircle, Loader2, Database } from 'lucide-react';
-import { products as mockProducts, Product, categories } from '../../data/mockData';
+import { Plus, Search, Edit2, Trash2, Eye, Tag, AlertCircle, Loader2 } from 'lucide-react';
+import { Product, categories } from '../../data/mockData';
 import { Button, Card, Input, Badge, Modal, Select, Textarea } from '../../components/ui';
 import { ImageUpload } from '../../components/admin/ImageUpload';
 import { isSupabaseConfigured } from '../../lib/supabase';
@@ -24,7 +24,6 @@ export function ProductsAdminPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [usingMockData, setUsingMockData] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '', price: '', originalPrice: '', description: '', shortDescription: '',
@@ -44,30 +43,28 @@ export function ProductsAdminPage() {
     setError(null);
     
     if (!isSupabaseConfigured()) {
-      console.warn('Supabase not configured, using mock data');
-      setProductsList(mockProducts);
-      setUsingMockData(true);
+      console.error('❌ Supabase not configured!');
+      setError('Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel environment variables.');
+      setProductsList([]);
       setLoading(false);
       return;
     }
 
     try {
+      console.log('🔄 Loading products from Supabase...');
       const products = await api.fetchProducts();
+      console.log('✅ Products loaded:', products.length);
+      
+      // Always use database data, even if empty
+      setProductsList(products);
+      
       if (products.length === 0) {
-        // Tables might not exist yet - fall back to mock data
-        console.warn('No products found in database. Tables may not be created yet.');
-        setProductsList(mockProducts);
-        setUsingMockData(true);
-        setError('Database tables not found. Please run the SQL schema first. See SETUP_GUIDE.md for instructions.');
-      } else {
-        setProductsList(products);
-        setUsingMockData(false);
+        console.log('ℹ️ No products in database yet. You can add some!');
       }
-    } catch (err) {
-      console.error('Failed to load products:', err);
-      setProductsList(mockProducts);
-      setUsingMockData(true);
-      setError('Failed to load products from database. Using demo data. Check if SQL schema has been run.');
+    } catch (err: any) {
+      console.error('❌ Failed to load products:', err);
+      setError(`Failed to load products: ${err.message || 'Unknown error'}. Check browser console and Supabase logs.`);
+      setProductsList([]);
     } finally {
       setLoading(false);
     }
@@ -112,6 +109,11 @@ export function ProductsAdminPage() {
       return;
     }
 
+    if (!isSupabaseConfigured()) {
+      setError('Supabase is not configured. Cannot save product.');
+      return;
+    }
+
     setSaving(true);
     setError(null);
     setSuccessMessage(null);
@@ -132,53 +134,40 @@ export function ProductsAdminPage() {
       sections: formData.sections,
     };
 
-    // If using mock data or Supabase not configured, just update local state
-    if (usingMockData || !isSupabaseConfigured()) {
-      if (editingProduct) {
-        setProductsList(prev => prev.map(p => p.id === editingProduct.id ? { ...p, ...productData } as Product : p));
-        setSuccessMessage('Product updated (demo mode)');
-      } else {
-        const newProduct: Product = {
-          id: Date.now().toString(),
-          ...productData,
-          rating: 0,
-          reviewCount: 0,
-          createdAt: new Date().toISOString().split('T')[0],
-        } as Product;
-        setProductsList(prev => [newProduct, ...prev]);
-        setSuccessMessage('Product added (demo mode)');
-      }
-      setIsModalOpen(false);
-      setSaving(false);
-      return;
-    }
+    console.log('💾 Saving product:', productData);
 
     // Save to Supabase
     try {
       let result;
       if (editingProduct) {
+        console.log('🔄 Updating product:', editingProduct.id);
         result = await api.updateProduct(editingProduct.id, productData);
       } else {
+        console.log('🔄 Creating new product');
         result = await api.createProduct(productData);
       }
 
       if (result) {
+        console.log('✅ Product saved successfully:', result);
         setSuccessMessage(editingProduct ? 'Product updated successfully!' : 'Product added successfully!');
         setIsModalOpen(false);
         // Reload products to get fresh data
         await loadProducts();
       } else {
-        setError('Failed to save product. Please try again.');
+        console.error('❌ Save returned null/undefined');
+        setError('Failed to save product. Check browser console and Supabase logs for details.');
       }
     } catch (err: any) {
-      console.error('Save error:', err);
+      console.error('❌ Save error:', err);
       const errorMessage = err.message || 'Failed to save product';
       
       // Check for common errors
       if (errorMessage.includes('relation') && errorMessage.includes('does not exist')) {
         setError('Database tables not found. Please run the SQL schema in Supabase SQL Editor first.');
       } else if (errorMessage.includes('new row violates row-level security')) {
-        setError('Permission denied. Make sure your user has admin role in the profiles table.');
+        setError('Permission denied. Make sure your user has admin role in the profiles table. Run: update public.profiles set role = \'admin\' where email = \'YOUR_EMAIL\';');
+      } else if (errorMessage.includes('duplicate key')) {
+        setError('A product with this slug already exists. Please use a different title.');
       } else {
         setError(`Failed to save: ${errorMessage}`);
       }
@@ -190,9 +179,8 @@ export function ProductsAdminPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
 
-    if (usingMockData || !isSupabaseConfigured()) {
-      setProductsList(prev => prev.filter(p => p.id !== id));
-      setSuccessMessage('Product deleted (demo mode)');
+    if (!isSupabaseConfigured()) {
+      setError('Supabase is not configured. Cannot delete product.');
       return;
     }
 
@@ -241,29 +229,10 @@ export function ProductsAdminPage() {
           <h1 className="text-2xl font-bold text-color-1">Products</h1>
           <p className="text-sm text-color-2 mt-1">
             {productsList.length} products in your store
-            {usingMockData && <span className="ml-2 text-yellow-600">(demo mode)</span>}
           </p>
         </div>
         <Button onClick={openAddModal}><Plus className="w-4 h-4" /> Add product</Button>
       </div>
-
-      {/* Status messages */}
-      {usingMockData && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-sm p-4 flex items-start gap-3">
-          <Database className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-yellow-800">Demo mode active</p>
-            <p className="text-xs text-yellow-700 mt-1">
-              Changes are not being saved to the database. To enable real data:
-            </p>
-            <ol className="text-xs text-yellow-700 mt-2 space-y-1 list-decimal list-inside">
-              <li>Run <code className="bg-yellow-100 px-1 rounded">supabase-schema.sql</code> in Supabase SQL Editor</li>
-              <li>Set <code className="bg-yellow-100 px-1 rounded">VITE_SUPABASE_URL</code> and <code className="bg-yellow-100 px-1 rounded">VITE_SUPABASE_ANON_KEY</code> in Vercel</li>
-              <li>Redeploy your site</li>
-            </ol>
-          </div>
-        </div>
-      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-sm p-4 flex items-start gap-3">
