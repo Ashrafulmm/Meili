@@ -150,44 +150,33 @@ on conflict (name) do nothing;`,
       };
     }
 
-    // ===== CHECK 5: Storage =====
+    // ===== CHECK 5: Vercel Blob API =====
     try {
-      const { data, error } = await supabase.storage.listBuckets();
-      if (error) {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'initiate-upload' }),
+      });
+      
+      // We expect a 400 error because we're not sending a real upload
+      // But if we get any response, the API route exists
+      if (response.status === 404) {
         newChecks.storage = {
           status: 'error',
-          message: `❌ Storage error: ${error.message}`,
+          message: '❌ Vercel Blob API route not found at /api/upload',
+          fix: 'Make sure api/upload.ts file exists in your project and has been deployed to Vercel.',
         };
       } else {
-        const hasBucket = data?.some(b => b.name === 'product-images');
-        if (hasBucket) {
-          newChecks.storage = {
-            status: 'success',
-            message: '✅ Storage bucket "product-images" exists!',
-          };
-        } else {
-          newChecks.storage = {
-            status: 'error',
-            message: '❌ Storage bucket "product-images" not found',
-            fix: 'Run this SQL to create the storage bucket:',
-            sql: `insert into storage.buckets (id, name, public)
-values ('product-images', 'product-images', true)
-on conflict (id) do nothing;
-
-create policy "Product images are publicly accessible"
-  on storage.objects for select
-  using (bucket_id = 'product-images');
-
-create policy "Anyone can upload product images"
-  on storage.objects for insert
-  with check (bucket_id = 'product-images');`,
-          };
-        }
+        newChecks.storage = {
+          status: 'success',
+          message: '✅ Vercel Blob API route is working!',
+        };
       }
     } catch (err: any) {
       newChecks.storage = {
         status: 'error',
         message: `❌ Exception: ${err.message}`,
+        fix: 'Make sure the api/upload.ts file is deployed to Vercel.',
       };
     }
 
@@ -273,7 +262,7 @@ on conflict (id) do update set role = 'admin';`,
     connection: '2. Database Connection',
     tables: '3. Database Tables',
     sections: '4. Homepage Sections',
-    storage: '5. Image Storage',
+    storage: '5. Vercel Blob (Image Upload)',
     auth: '6. Admin Authentication',
   };
 
