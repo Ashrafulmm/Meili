@@ -6,6 +6,7 @@ import { isSupabaseConfigured } from '../../lib/supabase';
 
 const adminLinks = [
   { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+  { label: 'Setup Wizard', path: '/admin/setup', icon: Settings },
   { label: 'Products', path: '/admin/products', icon: Package },
   { label: 'Orders', path: '/admin/orders', icon: ShoppingCart },
   { label: 'Categories', path: '/admin/categories', icon: Tag },
