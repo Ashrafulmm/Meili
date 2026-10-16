@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { uploadImage } from '../../lib/storage';
-import { isSupabaseConfigured } from '../../lib/supabase';
+import { upload } from '@vercel/blob/client';
 
 interface ImageUploadProps {
   images: string[];
@@ -13,7 +12,6 @@ export function ImageUpload({ images, onChange, maxImages = 10 }: ImageUploadPro
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const isConfigured = isSupabaseConfigured();
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -47,8 +45,15 @@ export function ImageUpload({ images, onChange, maxImages = 10 }: ImageUploadPro
     try {
       const newUrls: string[] = [];
       for (let i = 0; i < files.length; i++) {
-        const url = await uploadImage(files[i]);
-        newUrls.push(url);
+        const file = files[i];
+        
+        // Upload to Vercel Blob via serverless function
+        const blob = await upload(file.name, file, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
+        });
+        
+        newUrls.push(blob.url);
         setUploadProgress(Math.round(((i + 1) / files.length) * 100));
       }
 
@@ -89,21 +94,19 @@ export function ImageUpload({ images, onChange, maxImages = 10 }: ImageUploadPro
           <ImageIcon className="w-4 h-4" /> Product images
         </h3>
         <div className="flex gap-2">
-          {isConfigured && (
-            <label className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-color-4 text-color-4 rounded-sm hover:bg-color-4 hover:text-color-8 transition-colors duration-150 cursor-pointer">
-              <Upload className="w-3 h-3" />
-              Upload
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                multiple
-                onChange={handleFileSelect}
-                className="hidden"
-                disabled={uploading}
-              />
-            </label>
-          )}
+          <label className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-color-4 text-color-4 rounded-sm hover:bg-color-4 hover:text-color-8 transition-colors duration-150 cursor-pointer">
+            <Upload className="w-3 h-3" />
+            Upload
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+              disabled={uploading}
+            />
+          </label>
           <button
             type="button"
             onClick={addManualUrl}
@@ -114,22 +117,12 @@ export function ImageUpload({ images, onChange, maxImages = 10 }: ImageUploadPro
         </div>
       </div>
 
-      {!isConfigured && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-sm p-3">
-          <p className="text-xs text-yellow-800">
-            <strong>Note:</strong> Supabase not configured. Use manual image URLs below.
-            Set <code className="bg-yellow-100 px-1 rounded">VITE_SUPABASE_URL</code> and{' '}
-            <code className="bg-yellow-100 px-1 rounded">VITE_SUPABASE_ANON_KEY</code> in Vercel to enable direct uploads.
-          </p>
-        </div>
-      )}
-
       {uploading && (
         <div className="flex items-center gap-2 p-3 bg-color-7 rounded-sm">
           <Loader2 className="w-4 h-4 text-color-3 animate-spin" />
           <div className="flex-1">
             <div className="flex justify-between text-xs mb-1">
-              <span className="text-color-1">Uploading...</span>
+              <span className="text-color-1">Uploading to Vercel Blob...</span>
               <span className="text-color-2">{uploadProgress}%</span>
             </div>
             <div className="h-1.5 bg-color-6 rounded-full overflow-hidden">
