@@ -1,16 +1,115 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Star, ShoppingCart, Heart, Minus, Plus, Truck, Shield, RefreshCw } from 'lucide-react';
-import { products } from '../data/mockData';
 import { Button, Badge, Card } from '../components/ui';
 import { useCart } from '../context/CartContext';
+import { supabase } from '../lib/supabase';
+import type { Product } from '../data/mockData';
 
 export function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const product = products.find(p => p.slug === slug);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
+
+  // Fetch product from Supabase
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!slug) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select(`
+            *,
+            product_images(image_url, sort_order),
+            product_sections(section_id, sections(name))
+          `)
+          .eq('slug', slug)
+          .single();
+
+        if (error) {
+          console.error('Error fetching product:', error);
+          setLoading(false);
+          return;
+        }
+
+        // Transform data to match Product type
+        const transformedProduct: Product = {
+          id: data.id,
+          title: data.title,
+          slug: data.slug,
+          price: data.price,
+          originalPrice: data.original_price,
+          description: data.description,
+          shortDescription: data.short_description,
+          images: data.product_images?.sort((a: any, b: any) => a.sort_order - b.sort_order).map((img: any) => img.image_url) || [],
+          category: data.category,
+          stock: data.stock,
+          rating: data.rating || 0,
+          reviewCount: data.review_count || 0,
+          isFeatured: data.is_featured,
+          sections: data.product_sections?.map((ps: any) => ps.sections?.name) || [],
+          seoTitle: data.seo_title,
+          seoDescription: data.seo_description,
+          createdAt: data.created_at,
+        };
+
+        setProduct(transformedProduct);
+
+        // Fetch related products
+        const { data: relatedData } = await supabase
+          .from('products')
+          .select(`
+            *,
+            product_images(image_url, sort_order)
+          `)
+          .eq('category', data.category)
+          .neq('id', data.id)
+          .limit(4);
+
+        if (relatedData) {
+          const transformedRelated: Product[] = relatedData.map((p: any) => ({
+            id: p.id,
+            title: p.title,
+            slug: p.slug,
+            price: p.price,
+            originalPrice: p.original_price,
+            description: p.description,
+            shortDescription: p.short_description,
+            images: p.product_images?.sort((a: any, b: any) => a.sort_order - b.sort_order).map((img: any) => img.image_url) || [],
+            category: p.category,
+            stock: p.stock,
+            rating: p.rating || 0,
+            reviewCount: p.review_count || 0,
+            isFeatured: p.is_featured,
+            sections: [],
+            seoTitle: p.seo_title,
+            seoDescription: p.seo_description,
+            createdAt: p.created_at,
+          }));
+          setRelatedProducts(transformedRelated);
+        }
+      } catch (err) {
+        console.error('Failed to fetch product:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+        <p className="text-color-2">Loading product...</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -28,8 +127,6 @@ export function ProductDetailPage() {
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   };
-
-  const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

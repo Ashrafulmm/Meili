@@ -18,24 +18,29 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 bg-color-8 border-b border-color-6 shadow-sm">
-      {/* Main header - improved mobile layout */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
+      {/* Main header - compact layout */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+        <div className="flex items-center justify-between h-12 sm:h-14">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group shrink-0" aria-label="Meili Beauty Shop home">
-            <span className="text-xl">✨</span>
-            <span className="text-base sm:text-lg font-bold text-color-1 group-hover:text-color-4 transition-colors duration-150">
+          <Link to="/" className="flex items-center gap-1.5 sm:gap-2 group shrink-0" aria-label="Meili Beauty Shop home">
+            <span className="text-lg sm:text-xl">✨</span>
+            <span className="text-sm sm:text-base font-bold text-color-1 group-hover:text-color-4 transition-colors duration-150">
               Meili Beauty
             </span>
           </Link>
 
+          {/* Desktop: Search + Navigation inline */}
+          <div className="hidden md:flex items-center gap-4 flex-1 max-w-md mx-4">
+            <LiveSearch />
+          </div>
+
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
+          <nav className="hidden lg:flex items-center gap-4" aria-label="Main navigation">
             {navLinks.map(link => (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-sm font-medium transition-colors duration-150 whitespace-nowrap ${
+                className={`text-xs font-medium transition-colors duration-150 whitespace-nowrap ${
                   location.pathname === link.path ? 'text-color-4' : 'text-color-2 hover:text-color-1'
                 }`}
               >
@@ -45,31 +50,31 @@ export function Header() {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            <button className="relative p-2 text-color-2 hover:text-color-4 transition-colors duration-150" aria-label="Wishlist">
-              <Heart className="w-5 h-5" />
+          <div className="flex items-center gap-1 shrink-0">
+            <button className="relative p-1.5 text-color-2 hover:text-color-4 transition-colors duration-150" aria-label="Wishlist">
+              <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <Link to="/cart" className="relative p-2 text-color-2 hover:text-color-4 transition-colors duration-150" aria-label={`Shopping cart with ${totalItems} items`}>
-              <ShoppingCart className="w-5 h-5" />
+            <Link to="/cart" className="relative p-1.5 text-color-2 hover:text-color-4 transition-colors duration-150" aria-label={`Shopping cart with ${totalItems} items`}>
+              <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-color-4 text-color-8 text-xs font-bold rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-color-4 text-color-8 text-[10px] sm:text-xs font-bold rounded-full flex items-center justify-center">
                   {totalItems}
                 </span>
               )}
             </Link>
             <button
-              className="md:hidden p-2 text-color-2"
+              className="md:hidden p-1.5 text-color-2"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label="Toggle menu"
               aria-expanded={isMenuOpen}
             >
-              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {isMenuOpen ? <X className="w-4 h-4 sm:w-5 sm:h-5" /> : <Menu className="w-4 h-4 sm:w-5 sm:h-5" />}
             </button>
           </div>
         </div>
 
-        {/* Search bar - visible on all screens */}
-        <div className="pb-3">
+        {/* Mobile: Search bar below header */}
+        <div className="md:hidden pb-2">
           <LiveSearch />
         </div>
       </div>
