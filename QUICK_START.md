@@ -1,108 +1,68 @@
-# 🚀 Quick Start - Meili Beauty Shop
+# ⚡ Quick Start - Meili Beauty Shop
 
-## ⚠️ IMMEDIATE ACTION REQUIRED
+## Your Supabase Credentials ✅
 
-**You exposed sensitive credentials. Do this NOW:**
+```
+URL: https://ktfxnbtmuwsqdszciwvg.supabase.co
+Anon Key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
 
-1. **Revoke Vercel Blob token** in Vercel Dashboard → Settings → Blob → Regenerate
-2. **Get correct Supabase anon key** from Supabase Dashboard → Settings → API (it's a long JWT starting with `eyJ...`)
+Both are already configured in `.env.local`
 
 ---
 
-## 📋 4-Step Setup
+## 🎯 3-Step Setup
 
-### 1️⃣ Run Database Schema
+### 1️⃣ Run SQL Schema
 ```
-Supabase Dashboard → SQL Editor → New Query
-Copy ALL content from: supabase-schema.sql
-Paste → Run
+1. Go to: https://supabase.com/dashboard/project/ktfxnbtmuwsqdszciwvg/sql/new
+2. Copy ALL content from: supabase-schema.sql
+3. Paste → Click Run
 ```
 
 ### 2️⃣ Create Admin User
 ```
-Supabase Dashboard → Authentication → Users → Add user
-Email: your-email@example.com
-Password: (create strong password)
-✓ Auto Confirm User
-
-Then run this SQL:
-update public.profiles set role = 'admin' 
-where email = 'your-email@example.com';
+1. Authentication → Users → Add user
+2. Enter email + password
+3. ✓ Auto Confirm User
+4. Run SQL: update public.profiles set role = 'admin' where email = 'YOUR_EMAIL';
 ```
 
-### 3️⃣ Set Vercel Environment Variables
+### 3️⃣ Set Vercel Env Variables
 ```
-Vercel Dashboard → Settings → Environment Variables
-
-Add these (check all environments):
+Add to Vercel → Settings → Environment Variables:
 
 VITE_SUPABASE_URL = https://ktfxnbtmuwsqdszciwvg.supabase.co
-VITE_SUPABASE_ANON_KEY = (paste FULL anon key from Supabase)
-```
+VITE_SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
-### 4️⃣ Redeploy
-```
-Vercel Dashboard → Deployments → Latest deployment → ⋮ → Redeploy
+Then Redeploy!
 ```
 
 ---
 
-## ✅ Test Your Setup
+## ✅ Test It
 
 1. Visit `your-domain.com/admin/login`
-2. Login with your admin email/password
-3. Try adding a product with image upload
-4. Check if it appears on homepage
+2. Login with your credentials
+3. Add a product with image upload
+4. Check homepage - it should appear!
 
 ---
 
-## 📚 Need Help?
+## 📚 Full Guide
 
-Read the full guide: **SETUP_GUIDE.md**
-
----
-
-## 🔐 Security Checklist
-
-- [ ] Revoked exposed Vercel Blob token
-- [ ] Using correct Supabase anon key (long JWT)
-- [ ] Set environment variables in Vercel (not in code)
-- [ ] Never commit `.env` files
-- [ ] Enabled 2FA on Supabase and Vercel
-- [ ] Using strong admin password
+Read **SETUP_GUIDE.md** for detailed instructions.
 
 ---
 
-## 🎯 What's Connected
+## 🎉 What's Working
 
-✅ **Supabase Database** - Products, orders, categories, banners, settings  
-✅ **Supabase Auth** - Admin login/logout  
-✅ **Supabase Storage** - Image uploads (product-images bucket)  
-✅ **Homepage Sections** - Best deals, K-Beauty, Your pick, For you  
-✅ **Multi-Image Products** - Upload multiple photos per product  
-✅ **Order Management** - Status updates, customer details  
-✅ **Live Search** - Real-time product search  
-✅ **Responsive Design** - Mobile-friendly  
+✅ Supabase Database (products, orders, categories, banners)  
+✅ Supabase Auth (admin login)  
+✅ Supabase Storage (image uploads)  
+✅ Homepage Sections (Best deals, K-Beauty, Your pick, For you)  
+✅ Multi-Image Products  
+✅ Order Management  
+✅ Live Search  
 
----
-
-## 💡 Quick Tips
-
-**Add Product:**
-- Admin → Products → Add product
-- Upload images OR paste URLs
-- Check homepage sections to show it
-- Save
-
-**Process Order:**
-- Admin → Orders → Click 👁 to view
-- Update status: Pending → Confirmed → Processing → Shipped → Delivered
-
-**Change Store Info:**
-- Admin → Settings
-- Update name, phone, email, address
-- Save changes
-
----
-
-**You're all set! Start managing your store at `/admin`** ✨
+**Start managing at `/admin`** ✨
