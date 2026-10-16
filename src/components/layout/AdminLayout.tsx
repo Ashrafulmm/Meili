@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, Outlet, Navigate } from 'react-router-dom';
 import { LayoutDashboard, Package, ShoppingCart, Settings, Users, Image, Tag, Link2, LogOut, Menu, X } from 'lucide-react';
+import { getCurrentUser, signOut } from '../../lib/api';
+import { isSupabaseConfigured } from '../../lib/supabase';
 
 const adminLinks = [
   { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
@@ -15,10 +17,38 @@ const adminLinks = [
 
 export function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const location = useLocation();
-  const [isLoggedIn] = useState(true); // Mock auth state
 
-  if (!isLoggedIn) {
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (!isSupabaseConfigured()) {
+        setLoading(false);
+        return;
+      }
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+      setLoading(false);
+    };
+    checkAuth();
+  }, []);
+
+  const handleSignOut = async () => {
+    await signOut();
+    setUser(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-color-7 flex items-center justify-center">
+        <p className="text-color-2">Loading...</p>
+      </div>
+    );
+  }
+
+  // If Supabase is configured and user is not logged in, redirect to login
+  if (isSupabaseConfigured() && !user) {
     return <Navigate to="/admin/login" replace />;
   }
 
@@ -53,11 +83,20 @@ export function AdminLayout() {
             );
           })}
         </nav>
-        <div className="p-4 border-t border-color-6">
+        <div className="p-4 border-t border-color-6 space-y-2">
           <Link to="/" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-color-2 hover:text-color-4 transition-colors duration-150">
-            <LogOut className="w-4 h-4" aria-hidden="true" />
+            <span>🏪</span>
             Back to store
           </Link>
+          {user && (
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-color-2 hover:text-red-600 transition-colors duration-150"
+            >
+              <LogOut className="w-4 h-4" aria-hidden="true" />
+              Sign out
+            </button>
+          )}
         </div>
       </aside>
 
@@ -107,10 +146,24 @@ export function AdminLayout() {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-color-3 rounded-full flex items-center justify-center text-color-8 text-sm font-bold">
-              A
-            </div>
-            <span className="text-sm font-medium text-color-1">Admin</span>
+            {user ? (
+              <>
+                <div className="w-8 h-8 bg-color-3 rounded-full flex items-center justify-center text-color-8 text-sm font-bold">
+                  {user.email?.charAt(0).toUpperCase() || 'A'}
+                </div>
+                <div className="hidden sm:block">
+                  <p className="text-sm font-medium text-color-1">{user.email}</p>
+                  <p className="text-xs text-color-2">Administrator</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-8 h-8 bg-color-3 rounded-full flex items-center justify-center text-color-8 text-sm font-bold">
+                  A
+                </div>
+                <span className="text-sm font-medium text-color-1">Admin</span>
+              </>
+            )}
           </div>
         </header>
 

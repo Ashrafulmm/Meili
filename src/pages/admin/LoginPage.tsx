@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, Input } from '../../components/ui';
+import { signIn, getCurrentUser } from '../../lib/api';
+import { isSupabaseConfigured } from '../../lib/supabase';
 
 export function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -9,19 +11,36 @@ export function AdminLoginPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // Check if already logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser();
+      if (user) {
+        navigate('/admin');
+      }
+    };
+    checkAuth();
+  }, [navigate]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    // Mock login - in production this would use Supabase Auth
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    if (!isSupabaseConfigured()) {
+      setError('Supabase is not configured. Please set environment variables in Vercel.');
+      setLoading(false);
+      return;
+    }
+
+    const result = await signIn(email, password);
     
-    if (email && password) {
+    if (result.success) {
       navigate('/admin');
     } else {
-      setError('Please enter email and password');
+      setError(result.error || 'Failed to sign in. Please check your credentials.');
     }
+    
     setLoading(false);
   };
 
@@ -51,11 +70,26 @@ export function AdminLoginPage() {
             placeholder="Enter your password"
             required
           />
-          {error && <p className="text-xs text-color-4" role="alert">{error}</p>}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-sm p-3">
+              <p className="text-xs text-red-800">{error}</p>
+            </div>
+          )}
           <Button type="submit" className="w-full" size="lg" loading={loading}>
             Sign in
           </Button>
         </form>
+
+        {!isSupabaseConfigured() && (
+          <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-sm p-4">
+            <p className="text-xs text-yellow-800 font-medium mb-2">⚠️ Setup Required</p>
+            <p className="text-xs text-yellow-700">
+              Supabase environment variables are not configured. Please set{' '}
+              <code className="bg-yellow-100 px-1 rounded">VITE_SUPABASE_URL</code> and{' '}
+              <code className="bg-yellow-100 px-1 rounded">VITE_SUPABASE_ANON_KEY</code> in your Vercel environment variables.
+            </p>
+          </div>
+        )}
 
         <p className="text-xs text-color-2 text-center mt-6">
           Protected area. Only authorized administrators can access this panel.

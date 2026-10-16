@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Plus, Search, Edit2, Trash2, Eye, X, Image as ImageIcon, Tag } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Eye, Tag } from 'lucide-react';
 import { products as initialProducts, Product, categories } from '../../data/mockData';
 import { Button, Card, Input, Badge, Modal, Select, Textarea } from '../../components/ui';
+import { ImageUpload } from '../../components/admin/ImageUpload';
 
 type SectionKey = 'best-deals' | 'k-beauty' | 'your-pick' | 'for-you';
 
@@ -90,18 +91,6 @@ export function ProductsAdminPage() {
     if (confirm('Are you sure you want to delete this product?')) {
       setProductsList(prev => prev.filter(p => p.id !== id));
     }
-  };
-
-  // Image management helpers
-  const addImageField = () => setFormData({ ...formData, images: [...formData.images, ''] });
-  const removeImageField = (index: number) => {
-    const newImages = formData.images.filter((_, i) => i !== index);
-    setFormData({ ...formData, images: newImages.length > 0 ? newImages : [''] });
-  };
-  const updateImage = (index: number, value: string) => {
-    const newImages = [...formData.images];
-    newImages[index] = value;
-    setFormData({ ...formData, images: newImages });
   };
 
   // Section toggle
@@ -216,43 +205,11 @@ export function ProductsAdminPage() {
 
           {/* Images section */}
           <div className="border-t border-color-6 pt-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-color-1 flex items-center gap-2">
-                <ImageIcon className="w-4 h-4" /> Product images
-              </h3>
-              <Button size="sm" variant="outline" onClick={addImageField}>
-                <Plus className="w-3 h-3" /> Add image
-              </Button>
-            </div>
-            <p className="text-xs text-color-2 mb-3">First image will be the main product photo. Add multiple images for gallery view.</p>
-            <div className="space-y-2">
-              {formData.images.map((img, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <div className="flex-1 relative">
-                    <input
-                      type="text"
-                      value={img}
-                      onChange={e => updateImage(index, e.target.value)}
-                      placeholder={`Image URL ${index + 1}${index === 0 ? ' (main)' : ''}`}
-                      className="w-full px-4 py-2 text-sm bg-color-8 border-2 border-color-6 rounded-sm focus:border-color-3 focus:ring-2 focus:ring-color-3/20 transition-all duration-150 text-color-1 placeholder:text-color-2/50"
-                    />
-                    {index === 0 && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-color-3 font-medium">Main</span>
-                    )}
-                  </div>
-                  {img && (
-                    <img src={img} alt="" className="w-10 h-10 object-cover rounded-sm border border-color-6 shrink-0" />
-                  )}
-                  <button
-                    onClick={() => removeImageField(index)}
-                    className="p-2 text-color-2 hover:text-red-600 transition-colors duration-150 shrink-0"
-                    aria-label={`Remove image ${index + 1}`}
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
+            <ImageUpload
+              images={formData.images}
+              onChange={(images) => setFormData({ ...formData, images })}
+              maxImages={10}
+            />
           </div>
 
           {/* Homepage sections */}
