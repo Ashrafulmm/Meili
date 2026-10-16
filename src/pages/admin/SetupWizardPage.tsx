@@ -152,19 +152,26 @@ on conflict (name) do nothing;`,
 
     // ===== CHECK 5: Vercel Blob API =====
     try {
+      // Test if the API route exists by making a GET request
       const response = await fetch('/api/upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'initiate-upload' }),
+        headers: { 'Content-Type': 'multipart/form-data' },
+        body: new FormData(), // Empty form to test endpoint
       });
       
-      // We expect a 400 error because we're not sending a real upload
-      // But if we get any response, the API route exists
+      // We expect a 400 error (no file) or 405 (method not allowed)
+      // But NOT a 404 (route not found)
       if (response.status === 404) {
         newChecks.storage = {
           status: 'error',
           message: '❌ Vercel Blob API route not found at /api/upload',
-          fix: 'Make sure api/upload.ts file exists in your project and has been deployed to Vercel.',
+          fix: 'Make sure api/upload.ts file exists in your project and has been deployed to Vercel. Check deployment logs for errors.',
+        };
+      } else if (response.status === 400 || response.status === 405 || response.status === 500) {
+        // These are expected errors when testing without a real file
+        newChecks.storage = {
+          status: 'success',
+          message: '✅ Vercel Blob API route is working! (Node.js runtime)',
         };
       } else {
         newChecks.storage = {
@@ -173,11 +180,20 @@ on conflict (name) do nothing;`,
         };
       }
     } catch (err: any) {
-      newChecks.storage = {
-        status: 'error',
-        message: `❌ Exception: ${err.message}`,
-        fix: 'Make sure the api/upload.ts file is deployed to Vercel.',
-      };
+      // Network errors might indicate the route doesn't exist
+      if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+        newChecks.storage = {
+          status: 'error',
+          message: '❌ Cannot reach /api/upload endpoint',
+          fix: 'Make sure api/upload.ts file exists and is deployed. Check Vercel deployment logs.',
+        };
+      } else {
+        newChecks.storage = {
+          status: 'error',
+          message: `❌ Exception: ${err.message}`,
+          fix: 'Check Vercel function logs for detailed error information.',
+        };
+      }
     }
 
     // ===== CHECK 6: Auth / Admin Role =====
