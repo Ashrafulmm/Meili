@@ -1,10 +1,64 @@
-import { Package, ShoppingCart, Users, DollarSign, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { Card } from '../../components/ui';
-import { products, orders } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Package, ShoppingCart, Users, DollarSign, TrendingUp, ArrowUpRight, ArrowDownRight, AlertTriangle, CheckCircle2, Wrench } from 'lucide-react';
+import { Card, Button } from '../../components/ui';
+import { products as mockProducts, orders as mockOrders } from '../../data/mockData';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 
 export function DashboardPage() {
-  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
-  const pendingOrders = orders.filter(o => o.status === 'pending').length;
+  const [dbConnected, setDbConnected] = useState<boolean | null>(null);
+  const [products, setProducts] = useState(mockProducts);
+  const [orders, setOrders] = useState(mockOrders);
+
+  useEffect(() => {
+    // Check database connection
+    const checkConnection = async () => {
+      if (!isSupabaseConfigured()) {
+        setDbConnected(false);
+        return;
+      }
+      try {
+        const { error } = await supabase.from('products').select('id').limit(1);
+        setDbConnected(!error);
+        
+        // If connected, load real data
+        if (!error) {
+          const { data: productsData } = await supabase
+            .from('products')
+            .select('*, product_images(image_url, sort_order), product_sections(section_id, sections(name))')
+            .order('created_at', { ascending: false });
+          
+          if (productsData && productsData.length > 0) {
+            setProducts(productsData.map((p: any) => ({
+              id: p.id,
+              title: p.title,
+              slug: p.slug,
+              price: p.price,
+              originalPrice: p.original_price,
+              description: p.description,
+              shortDescription: p.short_description,
+              images: p.product_images?.map((img: any) => img.image_url) || [],
+              category: p.category,
+              stock: p.stock,
+              rating: p.rating || 0,
+              reviewCount: p.review_count || 0,
+              isFeatured: p.is_featured,
+              sections: p.product_sections?.map((ps: any) => ps.sections?.name) || [],
+              seoTitle: p.seo_title,
+              seoDescription: p.seo_description,
+              createdAt: p.created_at,
+            })));
+          }
+        }
+      } catch {
+        setDbConnected(false);
+      }
+    };
+    checkConnection();
+  }, []);
+
+  const totalRevenue = orders.reduce((sum: number, o: any) => sum + o.total, 0);
+  const pendingOrders = orders.filter((o: any) => o.status === 'pending').length;
   const totalProducts = products.length;
 
   const stats = [
@@ -14,7 +68,7 @@ export function DashboardPage() {
     { label: 'Customers', value: '234', icon: Users, change: '+18%', up: true, color: 'bg-purple-500' },
   ];
 
-  const recentOrders = orders.slice(0, 5);
+  const recentOrders = (orders as any[]).slice(0, 5);
 
   const statusColors: Record<string, string> = {
     pending: 'bg-yellow-100 text-yellow-800',
@@ -31,6 +85,45 @@ export function DashboardPage() {
         <h1 className="text-2xl font-bold text-color-1">Dashboard</h1>
         <p className="text-sm text-color-2 mt-1">Welcome back! Here's what's happening with your store.</p>
       </div>
+
+      {/* Database Connection Status */}
+      {dbConnected === false && (
+        <div className="bg-red-50 border-2 border-red-300 rounded-sm p-6">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-6 h-6 text-red-600 shrink-0" />
+            <div className="flex-1">
+              <h2 className="text-lg font-bold text-red-800 mb-2">⚠️ Database not connected</h2>
+              <p className="text-sm text-red-700 mb-3">
+                Your store is currently showing demo data. To save products, orders, and other changes, you need to connect to Supabase.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link to="/admin/setup">
+                  <Button variant="danger" size="md">
+                    <Wrench className="w-4 h-4" /> Run Setup Wizard
+                  </Button>
+                </Link>
+                <a
+                  href="https://supabase.com/dashboard/project/ktfxnbtmuwsqdszciwvg/sql/new"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border border-red-300 text-red-700 rounded-sm hover:bg-red-100 transition-colors duration-150"
+                >
+                  Open Supabase SQL Editor
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {dbConnected === true && (
+        <div className="bg-green-50 border border-green-300 rounded-sm p-4 flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+          <p className="text-sm text-green-800">
+            ✅ Connected to Supabase database. Changes are being saved!
+          </p>
+        </div>
+      )}
 
       {/* Stats grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
