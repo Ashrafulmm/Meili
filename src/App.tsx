@@ -19,6 +19,7 @@ import { AdminLoginPage } from './pages/admin/LoginPage';
 import { DiagnosticPage } from './pages/admin/DiagnosticPage';
 import { TestConnectionPage } from './pages/admin/TestConnectionPage';
 import { SetupWizardPage } from './pages/admin/SetupWizardPage';
+import { OffersPage, FlashSalePage, FreeGiftsPage } from './pages/SpecialPages';
 
 function StoreLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -40,6 +41,9 @@ function App() {
           <Route path="/products" element={<StoreLayout><ProductsPage /></StoreLayout>} />
           <Route path="/products/:slug" element={<StoreLayout><ProductDetailPage /></StoreLayout>} />
           <Route path="/categories" element={<StoreLayout><ProductsPage /></StoreLayout>} />
+          <Route path="/offers" element={<StoreLayout><OffersPage /></StoreLayout>} />
+          <Route path="/flash-sale" element={<StoreLayout><FlashSalePage /></StoreLayout>} />
+          <Route path="/free-gifts" element={<StoreLayout><FreeGiftsPage /></StoreLayout>} />
           <Route path="/about" element={<StoreLayout><AboutPage /></StoreLayout>} />
           <Route path="/cart" element={<StoreLayout><CartPage /></StoreLayout>} />
           <Route path="/checkout" element={<StoreLayout><CheckoutPage /></StoreLayout>} />
