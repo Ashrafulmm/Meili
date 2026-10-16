@@ -1,55 +1,124 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Star, Truck, Shield, RefreshCw } from 'lucide-react';
-import { products, categories, banners } from '../data/mockData';
+import { categories } from '../data/mockData';
 import { Card, Button, Badge } from '../components/ui';
 import { useCart } from '../context/CartContext';
+import { supabase } from '../lib/supabase';
+import type { Product } from '../data/mockData';
 
 export function HomePage() {
   const [currentBanner, setCurrentBanner] = useState(0);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
 
+  // Fetch products from Supabase
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select(`
+            *,
+            product_images(image_url, sort_order),
+            product_sections(section_id, sections(name))
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching products:', error);
+          return;
+        }
+
+        // Transform data to match Product type
+        const transformedProducts: Product[] = (data || []).map((p: any) => ({
+          id: p.id,
+          title: p.title,
+          slug: p.slug,
+          price: p.price,
+          originalPrice: p.original_price,
+          description: p.description,
+          shortDescription: p.short_description,
+          images: p.product_images?.sort((a: any, b: any) => a.sort_order - b.sort_order).map((img: any) => img.image_url) || [],
+          category: p.category,
+          stock: p.stock,
+          rating: p.rating || 0,
+          reviewCount: p.review_count || 0,
+          isFeatured: p.is_featured,
+          sections: p.product_sections?.map((ps: any) => ps.sections?.name) || [],
+          seoTitle: p.seo_title,
+          seoDescription: p.seo_description,
+          createdAt: p.created_at,
+        }));
+
+        setProducts(transformedProducts);
+      } catch (err) {
+        console.error('Failed to fetch products:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  // Banner rotation
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentBanner(prev => (prev + 1) % banners.length);
+      setCurrentBanner(prev => (prev + 1) % 2);
     }, 5000);
     return () => clearInterval(timer);
   }, []);
 
   // Section data - driven by product.sections field (managed from admin)
-  const bestDeals = products.filter(p => p.sections.includes('best-deals'));
-  const kBeauty = products.filter(p => p.sections.includes('k-beauty'));
-  const yourPick = products.filter(p => p.sections.includes('your-pick'));
-  const forYou = products.filter(p => p.sections.includes('for-you'));
+  const bestDeals = products.filter(p => p.sections?.includes('best-deals'));
+  const kBeauty = products.filter(p => p.sections?.includes('k-beauty'));
+  const yourPick = products.filter(p => p.sections?.includes('your-pick'));
+  const forYou = products.filter(p => p.sections?.includes('for-you'));
+
+  // Banner data (hardcoded for now, can be moved to database later)
+  const banners = [
+    {
+      title: 'Summer glow collection',
+      subtitle: 'Up to 40% off on selected items',
+      image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1200&h=400&fit=crop',
+    },
+    {
+      title: 'New arrivals',
+      subtitle: 'Discover the latest in beauty',
+      image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=1200&h=400&fit=crop',
+    },
+  ];
 
   return (
     <div className="min-h-screen">
-      {/* Hero Banner */}
+      {/* Hero Banner - Slimmer */}
       <section className="relative overflow-hidden bg-color-1" aria-label="Featured banner">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
-            <div className="space-y-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+          <div className="grid lg:grid-cols-2 gap-6 items-center">
+            <div className="space-y-4">
               <Badge variant="warning">✨ New collection</Badge>
-              <h1 className="text-4xl lg:text-5xl font-extrabold text-color-8 leading-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-color-8 leading-tight">
                 {banners[currentBanner]?.title || 'Summer glow collection'}
               </h1>
-              <p className="text-lg text-color-6/80">
+              <p className="text-base sm:text-lg text-color-6/80">
                 {banners[currentBanner]?.subtitle || 'Up to 40% off on selected items'}
               </p>
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                 <Link to="/products">
-                  <Button size="lg">
+                  <Button size="md">
                     Shop now <ArrowRight className="w-4 h-4" />
                   </Button>
                 </Link>
                 <Link to="/categories">
-                  <Button variant="outline" size="lg" className="border-color-8/30 text-color-8 hover:bg-color-8/10">
-                    Browse categories
+                  <Button variant="outline" size="md" className="border-color-8/30 text-color-8 hover:bg-color-8/10">
+                    Browse
                   </Button>
                 </Link>
               </div>
               {/* Banner dots */}
-              <div className="flex gap-2 pt-4">
+              <div className="flex gap-2 pt-2">
                 {banners.map((_, i) => (
                   <button
                     key={i}
@@ -66,7 +135,7 @@ export function HomePage() {
                 <img
                   src={banners[currentBanner]?.image}
                   alt={banners[currentBanner]?.title}
-                  className="relative rounded-sm shadow-sm object-cover w-full aspect-square"
+                  className="relative rounded-sm shadow-sm object-cover w-full aspect-square max-h-80"
                 />
               </div>
             </div>
@@ -135,76 +204,94 @@ export function HomePage() {
       </section>
 
       {/* Best Deals Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="best-deals-heading">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 id="best-deals-heading" className="text-2xl font-bold text-color-1">Best deals</h2>
-            <p className="text-sm text-color-2 mt-1">Grab them before they're gone</p>
+      {!loading && bestDeals.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="best-deals-heading">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 id="best-deals-heading" className="text-2xl font-bold text-color-1">Best deals</h2>
+              <p className="text-sm text-color-2 mt-1">Grab them before they're gone</p>
+            </div>
+            <Link to="/products" className="text-sm font-medium text-color-4 hover:text-color-5 transition-colors duration-150 flex items-center gap-1">
+              View all <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
-          <Link to="/products" className="text-sm font-medium text-color-4 hover:text-color-5 transition-colors duration-150 flex items-center gap-1">
-            View all <ArrowRight className="w-3 h-3" />
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {bestDeals.map(product => (
-            <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
-          ))}
-        </div>
-      </section>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {bestDeals.map(product => (
+              <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* K-Beauty Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="kbeauty-heading">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 id="kbeauty-heading" className="text-2xl font-bold text-color-1">K-Beauty</h2>
-            <p className="text-sm text-color-2 mt-1">Korean skincare favorites</p>
+      {!loading && kBeauty.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="kbeauty-heading">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 id="kbeauty-heading" className="text-2xl font-bold text-color-1">K-Beauty</h2>
+              <p className="text-sm text-color-2 mt-1">Korean skincare favorites</p>
+            </div>
+            <Link to="/products?category=k-beauty" className="text-sm font-medium text-color-4 hover:text-color-5 transition-colors duration-150 flex items-center gap-1">
+              View all <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
-          <Link to="/products?category=k-beauty" className="text-sm font-medium text-color-4 hover:text-color-5 transition-colors duration-150 flex items-center gap-1">
-            View all <ArrowRight className="w-3 h-3" />
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {kBeauty.map(product => (
-            <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
-          ))}
-        </div>
-      </section>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {kBeauty.map(product => (
+              <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Your Pick Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="your-pick-heading">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 id="your-pick-heading" className="text-2xl font-bold text-color-1">Your pick</h2>
-            <p className="text-sm text-color-2 mt-1">Handpicked by our team</p>
+      {!loading && yourPick.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="your-pick-heading">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 id="your-pick-heading" className="text-2xl font-bold text-color-1">Your pick</h2>
+              <p className="text-sm text-color-2 mt-1">Handpicked by our team</p>
+            </div>
+            <Link to="/products" className="text-sm font-medium text-color-4 hover:text-color-5 transition-colors duration-150 flex items-center gap-1">
+              View all <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
-          <Link to="/products" className="text-sm font-medium text-color-4 hover:text-color-5 transition-colors duration-150 flex items-center gap-1">
-            View all <ArrowRight className="w-3 h-3" />
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {yourPick.map(product => (
-            <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
-          ))}
-        </div>
-      </section>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {yourPick.map(product => (
+              <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* For You Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="for-you-heading">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 id="for-you-heading" className="text-2xl font-bold text-color-1">For you</h2>
-            <p className="text-sm text-color-2 mt-1">Recommended based on top-rated products</p>
+      {!loading && forYou.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="for-you-heading">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 id="for-you-heading" className="text-2xl font-bold text-color-1">For you</h2>
+              <p className="text-sm text-color-2 mt-1">Recommended based on top-rated products</p>
+            </div>
+            <Link to="/products" className="text-sm font-medium text-color-4 hover:text-color-5 transition-colors duration-150 flex items-center gap-1">
+              View all <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
-          <Link to="/products" className="text-sm font-medium text-color-4 hover:text-color-5 transition-colors duration-150 flex items-center gap-1">
-            View all <ArrowRight className="w-3 h-3" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {forYou.map(product => (
+              <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Empty state when no products */}
+      {!loading && products.length === 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+          <p className="text-lg text-color-2 mb-4">No products available yet</p>
+          <Link to="/products">
+            <Button>Browse all products</Button>
           </Link>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {forYou.map(product => (
-            <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
-          ))}
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* CTA Banner */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -230,7 +317,7 @@ export function HomePage() {
 
 // Product Card Component with 1:1 image and centered standard-size add-to-cart
 interface ProductCardProps {
-  product: typeof products[0];
+  product: Product;
   onAddToCart: () => void;
 }
 

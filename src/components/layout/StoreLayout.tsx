@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Menu, X, User, Heart } from 'lucide-react';
+import { ShoppingCart, Menu, X, Heart } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
-import { categories } from '../../data/mockData';
 import { LiveSearch } from '../search/LiveSearch';
 
 export function Header() {
@@ -18,30 +17,35 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-color-8 border-b border-color-6 shadow-md">
-      {/* Top bar */}
-      <div className="bg-color-1 text-color-8 text-xs py-2 text-center">
-        <p>Free delivery on orders above ৳2000 ✨ Shop now!</p>
-      </div>
-
-      {/* Main header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top row: Logo + Actions */}
-        <div className="flex items-center justify-between h-14 md:h-16">
+    <header className="sticky top-0 z-40 bg-color-8 border-b border-color-6 shadow-sm">
+      {/* Main header - improved mobile layout */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group shrink-0" aria-label="Meili Beauty Shop home">
-            <span className="text-2xl">✨</span>
-            <span className="text-lg sm:text-xl font-bold text-color-1 group-hover:text-color-4 transition-colors duration-150">
+            <span className="text-xl">✨</span>
+            <span className="text-base sm:text-lg font-bold text-color-1 group-hover:text-color-4 transition-colors duration-150">
               Meili Beauty
             </span>
           </Link>
 
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
+            {navLinks.map(link => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`text-sm font-medium transition-colors duration-150 whitespace-nowrap ${
+                  location.pathname === link.path ? 'text-color-4' : 'text-color-2 hover:text-color-1'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
           {/* Actions */}
-          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            <Link to="/admin" className="hidden sm:flex items-center gap-1 text-sm text-color-2 hover:text-color-4 transition-colors duration-150" aria-label="Admin dashboard">
-              <User className="w-4 h-4" />
-              <span className="hidden lg:inline">Admin</span>
-            </Link>
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <button className="relative p-2 text-color-2 hover:text-color-4 transition-colors duration-150" aria-label="Wishlist">
               <Heart className="w-5 h-5" />
             </button>
@@ -64,47 +68,30 @@ export function Header() {
           </div>
         </div>
 
-        {/* Second row: Search bar - visible on all screens */}
-        <div className="pb-3 md:pb-0 md:flex md:items-center md:gap-6 md:pb-3">
-          <div className="w-full md:flex-1 md:max-w-md">
-            <LiveSearch />
-          </div>
-          {/* Navigation - desktop, inline with search */}
-          <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
-            {navLinks.map(link => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`text-sm font-medium transition-colors duration-150 whitespace-nowrap ${
-                  location.pathname === link.path ? 'text-color-4' : 'text-color-2 hover:text-color-1'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+        {/* Search bar - visible on all screens */}
+        <div className="pb-3">
+          <LiveSearch />
         </div>
       </div>
 
       {/* Mobile menu */}
       {isMenuOpen && (
         <div className="md:hidden border-t border-color-6 bg-color-8">
-          <div className="px-4 py-4 space-y-3">
+          <div className="px-4 py-4 space-y-2">
             {navLinks.map(link => (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`block py-2 text-sm font-medium ${
-                  location.pathname === link.path ? 'text-color-4' : 'text-color-2'
+                className={`block py-2 px-3 rounded-sm text-sm font-medium transition-colors duration-150 ${
+                  location.pathname === link.path 
+                    ? 'bg-color-4 text-color-8' 
+                    : 'text-color-2 hover:bg-color-7'
                 }`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
-            <Link to="/admin" className="block py-2 text-sm font-medium text-color-2" onClick={() => setIsMenuOpen(false)}>
-              Admin dashboard
-            </Link>
           </div>
         </div>
       )}
