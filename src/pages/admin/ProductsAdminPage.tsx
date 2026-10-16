@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { Plus, Search, Edit2, Trash2, Eye, Tag } from 'lucide-react';
-import { products as initialProducts, Product, categories } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { Plus, Search, Edit2, Trash2, Eye, Tag, AlertCircle, Loader2, Database } from 'lucide-react';
+import { products as mockProducts, Product, categories } from '../../data/mockData';
 import { Button, Card, Input, Badge, Modal, Select, Textarea } from '../../components/ui';
 import { ImageUpload } from '../../components/admin/ImageUpload';
+import { isSupabaseConfigured } from '../../lib/supabase';
+import * as api from '../../lib/api';
 
 type SectionKey = 'best-deals' | 'k-beauty' | 'your-pick' | 'for-you';
 
@@ -14,10 +16,16 @@ const SECTION_OPTIONS: { key: SectionKey; label: string; description: string }[]
 ];
 
 export function ProductsAdminPage() {
-  const [productsList, setProductsList] = useState<Product[]>(initialProducts);
+  const [productsList, setProductsList] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [usingMockData, setUsingMockData] = useState(false);
+  
   const [formData, setFormData] = useState({
     title: '', price: '', originalPrice: '', description: '', shortDescription: '',
     category: 'Skincare', stock: '', isFeatured: false,
@@ -25,6 +33,45 @@ export function ProductsAdminPage() {
     images: [''] as string[],
     sections: [] as SectionKey[],
   });
+
+  // Load products from Supabase on mount
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    setLoading(true);
+    setError(null);
+    
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured, using mock data');
+      setProductsList(mockProducts);
+      setUsingMockData(true);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const products = await api.fetchProducts();
+      if (products.length === 0) {
+        // Tables might not exist yet - fall back to mock data
+        console.warn('No products found in database. Tables may not be created yet.');
+        setProductsList(mockProducts);
+        setUsingMockData(true);
+        setError('Database tables not found. Please run the SQL schema first. See SETUP_GUIDE.md for instructions.');
+      } else {
+        setProductsList(products);
+        setUsingMockData(false);
+      }
+    } catch (err) {
+      console.error('Failed to load products:', err);
+      setProductsList(mockProducts);
+      setUsingMockData(true);
+      setError('Failed to load products from database. Using demo data. Check if SQL schema has been run.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredProducts = productsList.filter(p =>
     p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -40,6 +87,7 @@ export function ProductsAdminPage() {
       images: [''],
       sections: [],
     });
+    setError(null);
     setIsModalOpen(true);
   };
 
@@ -52,48 +100,116 @@ export function ProductsAdminPage() {
       category: product.category, stock: product.stock.toString(), isFeatured: product.isFeatured,
       seoTitle: product.seoTitle, seoDescription: product.seoDescription,
       images: product.images.length > 0 ? product.images : [''],
-      sections: product.sections,
+      sections: product.sections || [],
     });
+    setError(null);
     setIsModalOpen(true);
   };
 
-  const handleSave = () => {
-    const cleanImages = formData.images.filter(img => img.trim() !== '');
-
-    if (editingProduct) {
-      setProductsList(prev => prev.map(p => p.id === editingProduct.id ? {
-        ...p, title: formData.title, price: Number(formData.price),
-        originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
-        description: formData.description, shortDescription: formData.shortDescription,
-        category: formData.category, stock: Number(formData.stock), isFeatured: formData.isFeatured,
-        seoTitle: formData.seoTitle, seoDescription: formData.seoDescription,
-        images: cleanImages,
-        sections: formData.sections,
-      } : p));
-    } else {
-      const newProduct: Product = {
-        id: Date.now().toString(), title: formData.title, slug: formData.title.toLowerCase().replace(/\s+/g, '-'),
-        price: Number(formData.price), originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
-        description: formData.description, shortDescription: formData.shortDescription,
-        images: cleanImages.length > 0 ? cleanImages : ['https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&h=600&fit=crop'],
-        category: formData.category, stock: Number(formData.stock), rating: 0, reviewCount: 0,
-        isFeatured: formData.isFeatured,
-        sections: formData.sections,
-        seoTitle: formData.seoTitle, seoDescription: formData.seoDescription,
-        createdAt: new Date().toISOString().split('T')[0],
-      };
-      setProductsList(prev => [newProduct, ...prev]);
+  const handleSave = async () => {
+    if (!formData.title || !formData.price) {
+      setError('Please fill in required fields: title and price');
+      return;
     }
-    setIsModalOpen(false);
+
+    setSaving(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    const productData: Partial<Product> = {
+      title: formData.title,
+      slug: formData.title.toLowerCase().replace(/\s+/g, '-'),
+      price: Number(formData.price),
+      originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
+      description: formData.description,
+      shortDescription: formData.shortDescription,
+      category: formData.category,
+      stock: Number(formData.stock) || 0,
+      isFeatured: formData.isFeatured,
+      seoTitle: formData.seoTitle,
+      seoDescription: formData.seoDescription,
+      images: formData.images.filter(img => img.trim() !== ''),
+      sections: formData.sections,
+    };
+
+    // If using mock data or Supabase not configured, just update local state
+    if (usingMockData || !isSupabaseConfigured()) {
+      if (editingProduct) {
+        setProductsList(prev => prev.map(p => p.id === editingProduct.id ? { ...p, ...productData } as Product : p));
+        setSuccessMessage('Product updated (demo mode)');
+      } else {
+        const newProduct: Product = {
+          id: Date.now().toString(),
+          ...productData,
+          rating: 0,
+          reviewCount: 0,
+          createdAt: new Date().toISOString().split('T')[0],
+        } as Product;
+        setProductsList(prev => [newProduct, ...prev]);
+        setSuccessMessage('Product added (demo mode)');
+      }
+      setIsModalOpen(false);
+      setSaving(false);
+      return;
+    }
+
+    // Save to Supabase
+    try {
+      let result;
+      if (editingProduct) {
+        result = await api.updateProduct(editingProduct.id, productData);
+      } else {
+        result = await api.createProduct(productData);
+      }
+
+      if (result) {
+        setSuccessMessage(editingProduct ? 'Product updated successfully!' : 'Product added successfully!');
+        setIsModalOpen(false);
+        // Reload products to get fresh data
+        await loadProducts();
+      } else {
+        setError('Failed to save product. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Save error:', err);
+      const errorMessage = err.message || 'Failed to save product';
+      
+      // Check for common errors
+      if (errorMessage.includes('relation') && errorMessage.includes('does not exist')) {
+        setError('Database tables not found. Please run the SQL schema in Supabase SQL Editor first.');
+      } else if (errorMessage.includes('new row violates row-level security')) {
+        setError('Permission denied. Make sure your user has admin role in the profiles table.');
+      } else {
+        setError(`Failed to save: ${errorMessage}`);
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this product?')) {
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+
+    if (usingMockData || !isSupabaseConfigured()) {
       setProductsList(prev => prev.filter(p => p.id !== id));
+      setSuccessMessage('Product deleted (demo mode)');
+      return;
+    }
+
+    try {
+      const success = await api.deleteProduct(id);
+      if (success) {
+        setSuccessMessage('Product deleted successfully!');
+        await loadProducts();
+      } else {
+        setError('Failed to delete product');
+      }
+    } catch (err: any) {
+      console.error('Delete error:', err);
+      setError(`Failed to delete: ${err.message}`);
     }
   };
 
-  // Section toggle
   const toggleSection = (section: SectionKey) => {
     const newSections = formData.sections.includes(section)
       ? formData.sections.filter(s => s !== section)
@@ -101,15 +217,75 @@ export function ProductsAdminPage() {
     setFormData({ ...formData, sections: newSections });
   };
 
+  // Clear messages after 5 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 text-color-3 animate-spin" />
+        <span className="ml-3 text-color-2">Loading products...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-color-1">Products</h1>
-          <p className="text-sm text-color-2 mt-1">{productsList.length} products in your store</p>
+          <p className="text-sm text-color-2 mt-1">
+            {productsList.length} products in your store
+            {usingMockData && <span className="ml-2 text-yellow-600">(demo mode)</span>}
+          </p>
         </div>
         <Button onClick={openAddModal}><Plus className="w-4 h-4" /> Add product</Button>
       </div>
+
+      {/* Status messages */}
+      {usingMockData && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-sm p-4 flex items-start gap-3">
+          <Database className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-yellow-800">Demo mode active</p>
+            <p className="text-xs text-yellow-700 mt-1">
+              Changes are not being saved to the database. To enable real data:
+            </p>
+            <ol className="text-xs text-yellow-700 mt-2 space-y-1 list-decimal list-inside">
+              <li>Run <code className="bg-yellow-100 px-1 rounded">supabase-schema.sql</code> in Supabase SQL Editor</li>
+              <li>Set <code className="bg-yellow-100 px-1 rounded">VITE_SUPABASE_URL</code> and <code className="bg-yellow-100 px-1 rounded">VITE_SUPABASE_ANON_KEY</code> in Vercel</li>
+              <li>Redeploy your site</li>
+            </ol>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-sm p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm text-red-800">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="text-xs text-red-600 hover:text-red-800 mt-2 underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 rounded-sm p-4 flex items-center gap-3">
+          <span className="text-green-600">✓</span>
+          <p className="text-sm text-green-800">{successMessage}</p>
+        </div>
+      )}
 
       {/* Search */}
       <Card className="p-4">
@@ -163,7 +339,7 @@ export function ProductsAdminPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
-                      {product.sections.length > 0 ? product.sections.map(s => (
+                      {product.sections && product.sections.length > 0 ? product.sections.map(s => (
                         <span key={s} className="text-xs bg-color-6 text-color-1 px-2 py-0.5 rounded-sm">
                           {SECTION_OPTIONS.find(o => o.key === s)?.label}
                         </span>
@@ -187,9 +363,15 @@ export function ProductsAdminPage() {
       {/* Add/Edit modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingProduct ? 'Edit product' : 'Add new product'}>
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-          <Input label="Product title" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="e.g. Rose glow serum" />
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-sm p-3">
+              <p className="text-xs text-red-800">{error}</p>
+            </div>
+          )}
+          
+          <Input label="Product title *" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="e.g. Rose glow serum" />
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Price (৳)" type="number" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} placeholder="1299" />
+            <Input label="Price (৳) *" type="number" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} placeholder="1299" />
             <Input label="Original price (৳)" type="number" value={formData.originalPrice} onChange={e => setFormData({ ...formData, originalPrice: e.target.value })} placeholder="1599 (optional)" />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -258,8 +440,10 @@ export function ProductsAdminPage() {
           </div>
 
           <div className="flex gap-3 pt-4 sticky bottom-0 bg-color-8 pb-2">
-            <Button onClick={handleSave} className="flex-1">{editingProduct ? 'Save changes' : 'Add product'}</Button>
-            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave} className="flex-1" loading={saving} disabled={saving}>
+              {saving ? 'Saving...' : (editingProduct ? 'Save changes' : 'Add product')}
+            </Button>
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)} disabled={saving}>Cancel</Button>
           </div>
         </div>
       </Modal>
