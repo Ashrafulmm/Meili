@@ -21,9 +21,11 @@ drop table if exists public.profiles cascade;
 drop function if exists public.handle_new_user() cascade;
 drop function if exists public.generate_order_number() cascade;
 
--- Drop storage bucket
-delete from storage.objects where bucket_id = 'product-images';
-delete from storage.buckets where id = 'product-images';
+-- Drop storage policies (we'll recreate them later)
+drop policy if exists "Product images are publicly accessible" on storage.objects;
+drop policy if exists "Admins can upload product images" on storage.objects;
+drop policy if exists "Admins can update product images" on storage.objects;
+drop policy if exists "Admins can delete product images" on storage.objects;
 
 -- ============================================
 -- NOW CREATE EVERYTHING FRESH
@@ -359,7 +361,8 @@ create trigger set_order_number
 -- ============================================
 
 insert into storage.buckets (id, name, public)
-values ('product-images', 'product-images', true);
+values ('product-images', 'product-images', true)
+on conflict (id) do nothing;
 
 create policy "Product images are publicly accessible"
   on storage.objects for select
