@@ -17,6 +17,7 @@ import { UsersAdminPage } from './pages/admin/UsersAdminPage';
 import { ImportPage } from './pages/admin/ImportPage';
 import { AdminLoginPage } from './pages/admin/LoginPage';
 import { DiagnosticPage } from './pages/admin/DiagnosticPage';
+import { TestConnectionPage } from './pages/admin/TestConnectionPage';
 
 function StoreLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -45,6 +46,7 @@ function App() {
           {/* Admin routes */}
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin/diagnostic" element={<DiagnosticPage />} />
+          <Route path="/admin/test" element={<TestConnectionPage />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<DashboardPage />} />
             <Route path="products" element={<ProductsAdminPage />} />
