@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { uploadImage } from '../../lib/storage';
 
 interface ImageUploadProps {
   images: string[];
@@ -46,22 +47,9 @@ export function ImageUpload({ images, onChange, maxImages = 10 }: ImageUploadPro
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        // Create FormData and upload to Vercel Blob via serverless function
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Upload failed');
-        }
-
-        const data = await response.json();
-        newUrls.push(data.url);
+        // Upload directly to Supabase Storage
+        const url = await uploadImage(file, 'products');
+        newUrls.push(url);
         setUploadProgress(Math.round(((i + 1) / files.length) * 100));
       }
 
@@ -130,7 +118,7 @@ export function ImageUpload({ images, onChange, maxImages = 10 }: ImageUploadPro
           <Loader2 className="w-4 h-4 text-color-3 animate-spin" />
           <div className="flex-1">
             <div className="flex justify-between text-xs mb-1">
-              <span className="text-color-1">Uploading to Vercel Blob...</span>
+              <span className="text-color-1">Uploading to Supabase Storage...</span>
               <span className="text-color-2">{uploadProgress}%</span>
             </div>
             <div className="h-1.5 bg-color-6 rounded-full overflow-hidden">

@@ -150,50 +150,59 @@ on conflict (name) do nothing;`,
       };
     }
 
-    // ===== CHECK 5: Vercel Blob API =====
+    // ===== CHECK 5: Supabase Storage Bucket =====
     try {
-      // Test if the API route exists by making a GET request
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'multipart/form-data' },
-        body: new FormData(), // Empty form to test endpoint
-      });
+      const { data: buckets, error } = await supabase.storage.listBuckets();
       
-      // We expect a 400 error (no file) or 405 (method not allowed)
-      // But NOT a 404 (route not found)
-      if (response.status === 404) {
+      if (error) {
         newChecks.storage = {
           status: 'error',
-          message: '❌ Vercel Blob API route not found at /api/upload',
-          fix: 'Make sure api/upload.ts file exists in your project and has been deployed to Vercel. Check deployment logs for errors.',
-        };
-      } else if (response.status === 400 || response.status === 405 || response.status === 500) {
-        // These are expected errors when testing without a real file
-        newChecks.storage = {
-          status: 'success',
-          message: '✅ Vercel Blob API route is working! (Node.js runtime)',
+          message: `❌ Storage error: ${error.message}`,
+          fix: 'Check your Supabase connection and permissions.',
         };
       } else {
-        newChecks.storage = {
-          status: 'success',
-          message: '✅ Vercel Blob API route is working!',
-        };
+        const hasBucket = buckets?.some(b => b.name === 'product-images');
+        if (hasBucket) {
+          newChecks.storage = {
+            status: 'success',
+            message: '✅ Supabase Storage bucket "product-images" exists!',
+          };
+        } else {
+          newChecks.storage = {
+            status: 'error',
+            message: '❌ Storage bucket "product-images" not found',
+            fix: 'Run this SQL in Supabase SQL Editor to create the bucket:',
+            sql: `insert into storage.buckets (id, name, public)
+values ('product-images', 'product-images', true)
+on conflict (id) do nothing;
+
+create policy "Product images are publicly accessible"
+  on storage.objects for select
+  using (bucket_id = 'product-images');
+
+create policy "Authenticated users can upload images"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'product-images' and
+    auth.role() = 'authenticated'
+  );
+
+create policy "Users can update their own images"
+  on storage.objects for update
+  using (bucket_id = 'product-images');
+
+create policy "Users can delete their own images"
+  on storage.objects for delete
+  using (bucket_id = 'product-images');`,
+          };
+        }
       }
     } catch (err: any) {
-      // Network errors might indicate the route doesn't exist
-      if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-        newChecks.storage = {
-          status: 'error',
-          message: '❌ Cannot reach /api/upload endpoint',
-          fix: 'Make sure api/upload.ts file exists and is deployed. Check Vercel deployment logs.',
-        };
-      } else {
-        newChecks.storage = {
-          status: 'error',
-          message: `❌ Exception: ${err.message}`,
-          fix: 'Check Vercel function logs for detailed error information.',
-        };
-      }
+      newChecks.storage = {
+        status: 'error',
+        message: `❌ Exception: ${err.message}`,
+        fix: 'Check your Supabase connection and storage permissions.',
+      };
     }
 
     // ===== CHECK 6: Auth / Admin Role =====
@@ -278,7 +287,7 @@ on conflict (id) do update set role = 'admin';`,
     connection: '2. Database Connection',
     tables: '3. Database Tables',
     sections: '4. Homepage Sections',
-    storage: '5. Vercel Blob (Image Upload)',
+    storage: '5. Supabase Storage (Image Upload)',
     auth: '6. Admin Authentication',
   };
 
