@@ -1,9 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Star, Filter, Grid3X3, List } from 'lucide-react';
-import { products, categories } from '../data/mockData';
+import { Star, Filter, Grid3X3, List, ShoppingCart } from 'lucide-react';
+import { categories } from '../data/mockData';
 import { Card, Button, Badge, Select } from '../components/ui';
 import { useCart } from '../context/CartContext';
+import { supabase } from '../lib/supabase';
+import type { Product } from '../data/mockData';
 
 export function ProductsPage() {
   const [searchParams] = useSearchParams();
@@ -12,7 +14,59 @@ export function ProductsPage() {
   const [sortBy, setSortBy] = useState('featured');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [priceRange, setPriceRange] = useState('all');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
+
+  // Fetch products from Supabase
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select(`
+            *,
+            product_images(image_url, sort_order),
+            product_sections(section_id, sections(name))
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching products:', error);
+          return;
+        }
+
+        // Transform data to match Product type
+        const transformedProducts: Product[] = (data || []).map((p: any) => ({
+          id: p.id,
+          title: p.title,
+          slug: p.slug,
+          price: p.price,
+          originalPrice: p.original_price,
+          description: p.description,
+          shortDescription: p.short_description,
+          images: p.product_images?.sort((a: any, b: any) => a.sort_order - b.sort_order).map((img: any) => img.image_url) || [],
+          category: p.category,
+          stock: p.stock,
+          rating: p.rating || 0,
+          reviewCount: p.review_count || 0,
+          isFeatured: p.is_featured,
+          sections: p.product_sections?.map((ps: any) => ps.sections?.name) || [],
+          seoTitle: p.seo_title,
+          seoDescription: p.seo_description,
+          createdAt: p.created_at,
+        }));
+
+        setProducts(transformedProducts);
+      } catch (err) {
+        console.error('Failed to fetch products:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -35,7 +89,7 @@ export function ProductsPage() {
     }
 
     return result;
-  }, [selectedCategory, sortBy, priceRange]);
+  }, [products, selectedCategory, sortBy, priceRange]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -136,8 +190,12 @@ export function ProductsPage() {
           </div>
 
           {/* Products */}
-          {viewMode === 'grid' ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <p className="text-color-2">Loading products...</p>
+            </div>
+          ) : viewMode === 'grid' ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
               {filteredProducts.map(product => (
                 <Card key={product.id} hover className="overflow-hidden group flex flex-col">
                   <Link to={`/products/${product.slug}`} className="block">
@@ -173,9 +231,10 @@ export function ProductsPage() {
                       <button
                         onClick={() => addToCart(product)}
                         style={{ borderRadius: '5px', padding: '8px 16px', fontSize: '13px' }}
-                        className="inline-flex items-center justify-center font-semibold bg-color-4 text-color-8 hover:bg-color-5 active:bg-color-1 shadow-md hover:shadow-sm transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-color-3"
+                        className="inline-flex items-center justify-center gap-1.5 font-semibold bg-color-4 text-color-8 hover:bg-color-5 active:bg-color-1 shadow-md hover:shadow-sm transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-color-3"
                         aria-label={`Add ${product.title} to cart`}
                       >
+                        <ShoppingCart className="w-3.5 h-3.5" />
                         Add to cart
                       </button>
                     </div>

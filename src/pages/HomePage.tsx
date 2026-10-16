@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Star, Truck, Shield, RefreshCw } from 'lucide-react';
+import { ArrowRight, Star, Truck, Shield, RefreshCw, ShoppingCart } from 'lucide-react';
 import { categories } from '../data/mockData';
 import { Card, Button, Badge } from '../components/ui';
 import { useCart } from '../context/CartContext';
@@ -215,7 +215,7 @@ export function HomePage() {
               View all <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {bestDeals.map(product => (
               <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
             ))}
@@ -235,7 +235,7 @@ export function HomePage() {
               View all <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {kBeauty.map(product => (
               <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
             ))}
@@ -255,7 +255,7 @@ export function HomePage() {
               View all <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {yourPick.map(product => (
               <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
             ))}
@@ -275,7 +275,7 @@ export function HomePage() {
               View all <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {forYou.map(product => (
               <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product)} />
             ))}
@@ -361,9 +361,10 @@ function ProductCard({ product, onAddToCart }: ProductCardProps) {
           <button
             onClick={onAddToCart}
             style={{ borderRadius: '5px', padding: '8px 16px', fontSize: '13px' }}
-            className="inline-flex items-center justify-center font-semibold bg-color-4 text-color-8 hover:bg-color-5 active:bg-color-1 shadow-md hover:shadow-sm transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-color-3 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-1.5 font-semibold bg-color-4 text-color-8 hover:bg-color-5 active:bg-color-1 shadow-md hover:shadow-sm transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-color-3 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label={`Add ${product.title} to cart`}
           >
+            <ShoppingCart className="w-3.5 h-3.5" />
             Add to cart
           </button>
         </div>
